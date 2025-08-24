@@ -1,6 +1,6 @@
 # Lies of P Save Editor ⚙️
 
-A custom save editor for *Lies of P* that allows players to view and modify their saves on **PC and PS4**.  
+A custom save editor for *Lies of P* that allows players to view and modify their saves on **PC, Xbox GamePass and PS4**.  
 ⚠️ Always back up your save files before making any edits.
 
 ---
