@@ -12,7 +12,7 @@ Before editing, you must **quit Lies of P through the settings menu** — not ju
 This ensures your save isn’t left in a corrupted state.
 
 <video src="settingsquit.gif" width="600" controls></video>  
-[▶ Watch Settings Quit Demo](./assets/settingsquit.gif)
+[▶ Watch Settings Quit Demo](settingsquit.gif)
 
 ---
 
@@ -21,7 +21,7 @@ On **PS4**, you need to copy **every Lies of P save file** to your USB or storag
 This ensures the save data updates correctly when transferred back.
 
 <video src="ps4savecopy.gif" width="600" controls></video>  
-[▶ Watch PS4 Save Copy Demo](./assets/ps4savecopy.gif)
+[▶ Watch PS4 Save Copy Demo](ps4savecopy.gif)
 
 ---
 
