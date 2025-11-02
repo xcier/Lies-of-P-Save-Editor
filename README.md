@@ -1,6 +1,6 @@
 # Lies of P Save Editor ⚙️
 
-A custom save editor for *Lies of P* that allows players to view and modify their saves on **PC and PS4**.  
+A custom save editor for *Lies of P* that allows players to view and modify their saves on **PC, Xbox GamePass and PS4**.  
 ⚠️ Always back up your save files before making any edits.
 
 ---
@@ -11,8 +11,12 @@ A custom save editor for *Lies of P* that allows players to view and modify thei
 Before editing, you must **quit Lies of P through the settings menu** — not just by closing the game.  
 This ensures your save isn’t left in a corrupted state.
 
+<<<<<<< HEAD
 <video src="./assets/settingsquit.mp4" width="600" controls></video>  
 [▶ Watch Settings Quit Demo](./assets/settingsquit.mp4)
+=======
+![Settings Quit Demo](./settingsquit.gif)
+>>>>>>> 1ab68fd84960eb689b5695458339fea4b5db7244
 
 ---
 
@@ -20,8 +24,12 @@ This ensures your save isn’t left in a corrupted state.
 On **PS4**, you need to copy **every Lies of P save file** to your USB or storage device, **even if you only want to edit one save**.  
 This ensures the save data updates correctly when transferred back.
 
+<<<<<<< HEAD
 <video src="./assets/ps4savecopy.mp4" width="600" controls></video>  
 [▶ Watch PS4 Save Copy Demo](./assets/ps4savecopy.mp4)
+=======
+![PS4 Save Copy Demo](./ps4savecopy.gif)
+>>>>>>> 1ab68fd84960eb689b5695458339fea4b5db7244
 
 ---
 
