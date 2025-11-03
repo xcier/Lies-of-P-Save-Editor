@@ -32,6 +32,9 @@ This ensures the save data updates correctly when transferred back.
 YOU CAN ONLY COPY PS4 DATA NOT PS5 (THE PS4 VERSION OF THE GAME [YES THERE IS A PS4 VERSION ON PS5)
 ---
 
+### JOIN DISCORD TO DECRYPT PS4 SAVES FREE!
+**https://discord.gg/T8Q32WvB3T**
+
 ## 🚀 Features
 - View & edit character data  
 - Modify currencies and stats  
