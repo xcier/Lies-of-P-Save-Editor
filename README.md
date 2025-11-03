@@ -11,26 +11,23 @@ A custom save editor for *Lies of P* that allows players to view and modify thei
 Before editing, you must **quit Lies of P through the settings menu** — not just by closing the game.  
 This ensures your save isn’t left in a corrupted state.
 
-<<<<<<< HEAD
+
 <video src="./assets/settingsquit.mp4" width="600" controls></video>  
 [▶ Watch Settings Quit Demo](./assets/settingsquit.mp4)
 =======
 ![Settings Quit Demo](./settingsquit.gif)
->>>>>>> 1ab68fd84960eb689b5695458339fea4b5db7244
-
+MAKE SURE TO QUIT THE GAME THIS WAY TO PREVENT THE PROFILE FROM LOADING YOUR PREVIOUS SAVE DUE TO "CORRUPTION"
 ---
 
 ### 2. Copy All Saves
 On **PS4**, you need to copy **every Lies of P save file** to your USB or storage device, **even if you only want to edit one save**.  
 This ensures the save data updates correctly when transferred back.
 
-<<<<<<< HEAD
 <video src="./assets/ps4savecopy.mp4" width="600" controls></video>  
 [▶ Watch PS4 Save Copy Demo](./assets/ps4savecopy.mp4)
 =======
 ![PS4 Save Copy Demo](./ps4savecopy.gif)
->>>>>>> 1ab68fd84960eb689b5695458339fea4b5db7244
-
+YOU CAN ONLY COPY PS4 DATA NOT PS5 (THE PS4 VERSION OF THE GAME [YES THERE IS A PS4 VERSION ON PS5)
 ---
 
 ## 🚀 Features
