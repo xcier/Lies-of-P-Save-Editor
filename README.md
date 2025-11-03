@@ -16,6 +16,7 @@ This ensures your save isn’t left in a corrupted state.
 [▶ Watch Settings Quit Demo](./assets/settingsquit.mp4)
 =======
 ![Settings Quit Demo](./settingsquit.gif)
+
 MAKE SURE TO QUIT THE GAME THIS WAY TO PREVENT THE PROFILE FROM LOADING YOUR PREVIOUS SAVE DUE TO "CORRUPTION"
 ---
 
@@ -27,6 +28,7 @@ This ensures the save data updates correctly when transferred back.
 [▶ Watch PS4 Save Copy Demo](./assets/ps4savecopy.mp4)
 =======
 ![PS4 Save Copy Demo](./ps4savecopy.gif)
+
 YOU CAN ONLY COPY PS4 DATA NOT PS5 (THE PS4 VERSION OF THE GAME [YES THERE IS A PS4 VERSION ON PS5)
 ---
 
