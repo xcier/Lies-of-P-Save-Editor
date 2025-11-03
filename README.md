@@ -15,7 +15,7 @@ This ensures your save isn’t left in a corrupted state.
 <video src="./assets/settingsquit.mp4" width="600" controls></video>  
 [▶ Settings Quit First](./assets/settingsquit.mp4)
 =======
-![Settings Quit Demo](./settingsquit.gif)
+![Settings Quit First](./settingsquit.gif)
 
 MAKE SURE TO QUIT THE GAME THIS WAY TO PREVENT THE PROFILE FROM LOADING YOUR PREVIOUS SAVE DUE TO "CORRUPTION"
 ---
@@ -25,7 +25,7 @@ On **PS4**, you need to copy **every Lies of P save file** to your USB or storag
 This ensures the save data updates correctly when transferred back.
 
 <video src="./assets/ps4savecopy.mp4" width="600" controls></video>  
-[▶ Watch PS4 Save Copy Demo](./assets/ps4savecopy.mp4)
+[▶ PS4/5 Save Copy](./assets/ps4savecopy.mp4)
 =======
 ![PS4/5 Save Copy](./ps4savecopy.gif)
 
