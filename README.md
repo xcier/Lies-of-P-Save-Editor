@@ -13,7 +13,7 @@ This ensures your save isn’t left in a corrupted state.
 
 
 <video src="./assets/settingsquit.mp4" width="600" controls></video>  
-[▶ Watch Settings Quit Demo](./assets/settingsquit.mp4)
+[▶ Settings Quit First](./assets/settingsquit.mp4)
 =======
 ![Settings Quit Demo](./settingsquit.gif)
 
@@ -27,7 +27,7 @@ This ensures the save data updates correctly when transferred back.
 <video src="./assets/ps4savecopy.mp4" width="600" controls></video>  
 [▶ Watch PS4 Save Copy Demo](./assets/ps4savecopy.mp4)
 =======
-![PS4 Save Copy Demo](./ps4savecopy.gif)
+![PS4/5 Save Copy](./ps4savecopy.gif)
 
 YOU CAN ONLY COPY PS4 DATA NOT PS5 (THE PS4 VERSION OF THE GAME [YES THERE IS A PS4 VERSION ON PS5)
 ---
