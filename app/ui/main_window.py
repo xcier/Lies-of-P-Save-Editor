@@ -213,7 +213,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Lies of P Save Editor V0.3 Created by ProtoBuffers[*]")
+        # --- VERSION BUMPED TO V1.01 ---
+        self.setWindowTitle("Lies of P Save Editor V1.01 Created by ProtoBuffers[*]")
         self.resize(1180, 760)
 
         # icon
@@ -427,6 +428,25 @@ class MainWindow(QMainWindow):
         set_template_action.setStatusTip("Remember a default .sav template to use when saving from JSON")
         self._restore_geometry()
         self.enable_drag_drop()
+
+        # ---------- Apply theme to theme-aware children ----------
+        try:
+            if hasattr(self.fast_travel_tab, "apply_theme"):
+                self.fast_travel_tab.apply_theme(self._dark_mode_pref)
+        except Exception:
+            pass
+
+        try:
+            if hasattr(self.about_tab, "apply_theme"):
+                self.about_tab.apply_theme(self._dark_mode_pref)
+        except Exception:
+            pass
+
+        try:
+            if hasattr(self.nav, "apply_theme"):
+                self.nav.apply_theme(self._dark_mode_pref)
+        except Exception:
+            pass
 
         # State
         self.data: Optional[Dict[str, Any]] = None
@@ -800,6 +820,20 @@ class MainWindow(QMainWindow):
         except Exception:
             pass
 
+        # tell AboutTab so its QTextBrowser colors update
+        try:
+            if hasattr(self, "about_tab") and self.about_tab is not None and hasattr(self.about_tab, "apply_theme"):
+                self.about_tab.apply_theme(bool(checked))
+        except Exception:
+            pass
+
+        # tell SideNav so its background / text stay readable
+        try:
+            if hasattr(self, "nav") and self.nav is not None and hasattr(self.nav, "apply_theme"):
+                self.nav.apply_theme(bool(checked))
+        except Exception:
+            pass
+
         # update the status bar button label
         try:
             if self.theme_btn:
@@ -914,7 +948,8 @@ class MainWindow(QMainWindow):
         self._refresh_title()
 
     def _refresh_title(self):
-        base = "Lies of P Save Editor V0.3 Created by ProtoBuffers"
+        # --- VERSION STRING UPDATED HERE TOO ---
+        base = "Lies of P Save Editor V1.01 Created by ProtoBuffers"
         try:
             alias = (self.character_tab.alias_combo.currentText() or "").strip()
             if not alias:
