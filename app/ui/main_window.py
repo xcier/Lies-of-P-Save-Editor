@@ -635,7 +635,13 @@ class MainWindow(QMainWindow):
             return
 
         # Resolve a valid src .sav (GVAS template)
-        src = self._find_sav_template()
+        # Prefer the .sav we actually loaded/derived this JSON from.
+        try:
+            src = (self.data.get('_meta') or {}).get('src_sav', '')
+        except Exception:
+            src = ''
+        if not src or not os.path.isfile(src):
+            src = self._find_sav_template()
         if not src:
             # prompt user as the last resort
             QMessageBox.information(
@@ -677,8 +683,23 @@ class MainWindow(QMainWindow):
         self._saver.start()
 
     def _on_save_done(self, path: str):
+        # After saving, treat the output .sav as the new baseline and re-load it.
         self.status_bar.showMessage(f"Saved: {path}", 4000)
+        try:
+            if isinstance(self.data, dict):
+                self.data.setdefault('_meta', {})
+                self.data['_meta']['src_sav'] = path
+        except Exception:
+            pass
+        self.current_file = path
+        self._mark_dirty(False)
+        # Clear busy/save UI state first, then re-open the saved file so subsequent edits apply cleanly.
         self._after_save()
+        try:
+            self._open_path(path)
+        except Exception:
+            # If reload fails, the save is still valid; don't crash the UI.
+            pass
 
     def _on_save_error(self, msg: str):
         hint = ""

@@ -1,0 +1,569 @@
+{
+  "schema_version": 1,
+  "generated_from": "app/resources/item_list.csv",
+  "generated_utc": "2025-12-18T16:15:02Z",
+  "handles": {
+    "WP_PC_HND_AcidGreatsword": {
+      "name": "Acidic Great Curved Sword Handle",
+      "tooltip": "The handle of a curved sword made by the Alchemists while researching Carcass body fluids.\\nThe bottom of the handle is finished with a snake head decoration.,\nThe serpent of the Uroboros was a symbol that the Alchemists held sacred.\\nThey made the weapon of their dreams from the Carcass body fluid that reminded them of the viper.,\nViper’s,"
+    },
+    "WP_PC_HND_Baton": {
+      "name": "Krat Police Baton Handle",
+      "tooltip": "“Do not ever rob a police officer’s home. You won’t go to prison. It’s a one-way ticket to the sewers with a head smashed by a police baton.”\\n- The advice of a retired petty thief,\nAbsolute,\nThe handle from the self-defense batons used by Krat police.\\nThe grooved lines make for a firm grip. It can be assembled with any blade.,"
+    },
+    "WP_PC_HND_Bayonet": {
+      "name": "Greatsword of Fate Handle",
+      "tooltip": "A standard greatsword handle made by the Workshop.\\nIt is sturdy since it was made with the Krat Workshop’s special techniques.,\nMonster Sweeper’s,\nThe Workshop gathered monster sweepers to face the unprecedented crisis.\\nThey lived up to their reputation, eating up monsters and becoming monsters in their own right.,"
+    },
+    "WP_PC_HND_ChainScythe": {
+      "name": "Clockwork Murderer’s Handle",
+      "tooltip": "A chain-sickle handle that once sprayed a bloody fog over Krat.\\nThe spring device allows the handler to extend or wind up the chain easily.,\nKrat has a legend about a grinning hedonist murderer.\\nThey say his heart was made of clockwork.,\nPuppet Ripper,"
+    },
+    "WP_PC_HND_Charkram": {
+      "name": "Uroboros’s Eye Handle",
+      "tooltip": "A moon sword that was lying asleep in the Arche Abbey.\\nThey say this weapon was handcrafted by a legendary Alchemist.,\nEternal,\nPhilippus Paracelsus was a legend even among the Alchemists.\\nThe moon sword he made by modeling the Uroboros mark symbolized wholeness.,"
+    },
+    "WP_PC_HND_Cleaver": {
+      "name": "Master Chef’s Knife Handle",
+      "tooltip": "Slaughtering,\nThe handle of the personal knife of a master chef.\\nSome famous chefs engrave their handles with their symbol or initials.,\nWhile slaughtering puppets, they lost their sanity amidst the violence.\\nThey got more and more drunk on the feeling of cutting something to pieces rather than saving people.,"
+    },
+    "WP_PC_HND_ClockSword": {
+      "name": "Clock Sword Handle",
+      "tooltip": "Clock Sword Handle,\nSophisticated,\nThe Clock Sword was made to commemorate the construction of the clocktower by using its minute hand.\\nBecause even its blade was engraved with antique ornamentation, people said it was a fitting commemorative item.,"
+    },
+    "WP_PC_HND_ClockworkBlunt": {
+      "name": "Big Pipe Wrench Handle",
+      "tooltip": "Masterless,\nThe handle of a large pipe wrench made by Venigni Company.\\nIt was made with sturdy parts so that it can endure substantial weight.,\nThey were technicians, not warriors.\\nUnfortunately, none managed to wield a blunt weapon properly until every last one of them was killed.,"
+    },
+    "WP_PC_HND_CoilRod": {
+      "name": "Electric Coil Stick Handle",
+      "tooltip": "Merciless,\nThe handle of a blunt weapon made by Venigni Company to destroy puppets.\\nMuch effort went into the handle’s insulation for the sake of the user’s safety.,\nThe powerful Electric Blitz was clearly effective in killing puppets.\\nHowever, its inventor failed to realize that it was also effective on humans.,"
+    },
+    "WP_PC_HND_CrystalAxe": {
+      "name": "Carcass Crystal Axe Handle",
+      "tooltip": "Obsessive,\nThe handle of an axe made by Alchemists for their experiments.\\nIt is equipped with additional weight to make it easy to control the heavy blade.,\nThe inhumanity of the obsessive research by the Alchemists caused an internal revolt.\\nSome among them fled the organization and decided to expose the truth to the world.,"
+    },
+    "WP_PC_HND_CrystalSpear": {
+      "name": "Acidic Crystal Spear Handle",
+      "tooltip": "The Alchemists have long amassed knowledge through their numerous experiments and research.\\nSome of these experiments were twisted and inhumane.,\nThe handle from a spear made from a sharpened Carcass spine crystal.\\nIt was made with a special alloy to prevent the user from being exposed to acid.,\nTwisted,"
+    },
+    "WP_PC_HND_CrystalSword": {
+      "name": "Frozen Feast Handle",
+      "tooltip": "Broken,\nThe handle of an Ergo crystal sword made by an Alchemist.\\nThe metal handle is wrapped in a specially processed leather.,\nThere was an Alchemist who went around calling Ergo the crystal of crumbled time, but no one paid them any heed.\\nFools were not given a platform from which to speak.,"
+    },
+    "WP_PC_HND_Dagger": {
+      "name": "Tyrant Murderer’s Dagger Handle",
+      "tooltip": "Assassination,\nIn the slums, those with strength and skill are given a chance.\\nWhether they can hold authority for long is another matter.,\nThe handle of a dagger used for sneak attacks, popular among the poor who live on the streets.\\nThe leather grip prevents bloodstains from standing out too much.,"
+    },
+    "WP_PC_HND_ElectricCutter": {
+      "name": "Circular Electric Chainsaw Handle",
+      "tooltip": "A handle made from a generator’s support.\\nIt was made to relieve the quickly rotating vibrations aggressively.,\nLethal,\nThe vibrations of the circular saw blade made it lethal to its wielder as well.\\nTo harm no one but an opponent, the chainsaw handle was crafted to relieve the vibrations.,"
+    },
+    "WP_PC_HND_ElectricHammer": {
+      "name": "Coil Mjolnir Handle",
+      "tooltip": "“How could he use my storage battery on this horrifying thing? Is Descartes a fool or a genius?”\\n- The opinion of Venigni on Descartes' Hammer,\nConflicting,\nThe handle of a hammer altered by attaching Venigni’s storage battery.\\nIt was made long and sturdy so that it could withstand the hammer’s impact.,"
+    },
+    "WP_PC_HND_FireAxe": {
+      "name": "Fire Axe Handle",
+      "tooltip": "Sacrifice,\nThe Krat fire brigade’s close-order axe handle.\\nThe handle is long so that it can deal with fires in high places.,\nTheir axes were dyed horrifically with blood.\\nIt was not the blood of others. It was their own.,"
+    },
+    "WP_PC_HND_FirePickaxe": {
+      "name": "Exploding Pickaxe Handle",
+      "tooltip": "Forgotten,\nNo one remembers the number of laborer puppets that died in the explosion.\\nNo one besides the puppets, that is.,\nThe handle of a mining tool used by Workshop laborer puppets.\\nIt is sturdy and heavy since it is a tool for puppets and not humans.,"
+    },
+    "WP_PC_HND_FlameDagger": {
+      "name": "Salamander Dagger Handle",
+      "tooltip": "A dagger handle made by the Alchemists.\\nIt was made in the shape of a snake biting its tail.,\nFollowing the same principle as the dagger, there are some Alchemists who can expel great heat from an Ergo heart.\\nThese baptists who possessed fire abilities called themselves Simon’s Fire, the Purifiers of Truth.,\nTruthful,"
+    },
+    "WP_PC_HND_FlameSword": {
+      "name": "Black Steel Cutter Handle",
+      "tooltip": "Eccentric’s,\nThe cutting machine is one of Venigni’s first inventions.\\nEven the people who called Venigni a geek could not scoff at his brilliant business acumen.,\nThe handle of a metal cutter made by Venigni Company.\\nThe handle was crafted from black iron with remarkable heat tolerance.,"
+    },
+    "WP_PC_HND_Glaive": {
+      "name": "Booster Glaive Handle",
+      "tooltip": "“Not enough firepower? Just add more!”\\nA hot-tempered Stalker’s invention turned out to be more useful than expected and came to be used frequently among Stalkers.,\nBurning,\nThe handle of a glaive assembled by a Stalker by attaching booster equipment together.\\nBooster attacks are tricky but fast and powerful.,"
+    },
+    "WP_PC_HND_GreatAxe": {
+      "name": "Live Puppet’s Axe Handle",
+      "tooltip": "A fierce grudge can sometimes give birth to horrifying creations.\\nThe twitching arm’s axe was a sight to behold.,\nAn axe handle that a Stalker made using the frame of an industrial puppet.\\nIt is said to have been decorated with the arm of the first puppet hunted.,\nHorrific,"
+    },
+    "WP_PC_HND_GreatSaw": {
+      "name": "Bone-Cutting Handle",
+      "tooltip": "“I don’t know when I awoke. The sights I have seen overlap. They repeat.”\\n“Was that puppet... a dream?”\\n- Notes from a Stalker’s last counseling session before going mad,\nA handle that Stalkers like to use when they are assembling weapons.\\nIt is heavy and sturdy, so it can balance large blades.,\nAwakened,"
+    },
+    "WP_PC_HND_GreatSpear": {
+      "name": "City Longspear Handle",
+      "tooltip": "A spear handle made out of a signpost’s support.\\nThe marks signifying the location have faded to the point that they are unrecognizable.,\nCity’s,\nShort on weapons, the citizens quickly started to make weapons out of city property.\\nIt was like a mini diorama of Krat.,"
+    },
+    "WP_PC_HND_Halberd": {
+      "name": "Cursed Knight’s Halberd Handle",
+      "tooltip": "The blade of a halberd collected by a Krat aristocrat.\\nDespite being an old weapon, its proportions make it easy to handle.,\nThe discovery of the Gold Coin Tree made the knight of the isolated castle grow vain.\\nThe knight sought greater wealth and glory than the king and ultimately fell to ruin from the king’s jealousy.,\nVain,"
+    },
+    "WP_PC_HND_Hwando": {
+      "name": "Two Dragons Sword Handle",
+      "tooltip": "A precious sword that was at the Grand Exhibition Gallery.\\nThey say it was the saber of a commander from a quiet eastern land.,\nOcean,\nThe sea remembers the vow of the warrior.\\nThe general who rose up with the dragon to protect the people claimed a lonely victory in dozens of wars.,"
+    },
+    "WP_PC_HND_KkabiClub": {
+      "name": "Noblesse Oblige Handle",
+      "tooltip": "A mystical cudgel made from an Ergo crystal tree.\\nWhile battering enemies, it emits spores, increasing the Ergo acquisition rate.,\nGreedy,\nThe Stalker who desired wealth made a contract with a devil that liked music to gain a cudgel.\\nAlong with this he was gifted with overflowing Ergo and the Petrification Disease.,"
+    },
+    "WP_PC_HND_Kukri": {
+      "name": "Bramble Curved Sword Handle",
+      "tooltip": "A curved sword handle smuggled in from outside the city.\\nIt is made of wild brambles and wrapped in bloodstained string.,\nPainful,\nThe warriors of the wilderness do not remove the Bramble Curved Sword’s thorns.\\nThey say that the moment the Bramble Curved Sword’s thorns pierce the warrior’s hands and absorb the blood, the curved sword and the warrior share one soul.,"
+    },
+    "WP_PC_HND_NoseStaff": {
+      "name": "Golden Lie Handle",
+      "tooltip": "\\There are two kinds of lies. Yours is the lie that makes your nose long.\\\"\\nThe boy loved the fairy tale about the wooden puppet’s adventure.\\nAt least the wooden puppet’s father was kind.\",\nA mystical wooden rod obtained from the boy’s portrait.\\nFascinatingly, it extends and retracts at the whim of Geppetto’s puppet.,\nSoul-filled,"
+    },
+    "WP_PC_HND_Rapier": {
+      "name": "Wintry Rapier's Handle",
+      "tooltip": "A handle made to reflect the client’s tastes.\\nThis handle, meant for a weapon used for duels, is elaborately engraved.,\nFrozen,\nThe Petrification Disease swallowed everyone inside a winter crystal.\\nOne has no choice but to take up the sword in order not to freeze.,"
+    },
+    "WP_PC_HND_RockDrill": {
+      "name": "Pistol Rock Drill Handle",
+      "tooltip": "A rock drill handle made by Venigni Company.\\nWhen the trigger is pulled, the piston joint vibrates the blade and increases its destructive power.,\nPainful,\nThe workers who suffered pain from the rock drill’s strong recoil complained.\\nIn the end, this led to the Ergo mine worksite being occupied by miner puppets.,"
+    },
+    "WP_PC_HND_Saber": {
+      "name": "Puppet's Saber Handle",
+      "tooltip": "A standard sword handle made at the Workshop.\\nIt has endured many battles, and the stains of blood and grease cannot be distinguished from one another.,\nRed,\nThe red stain has faded to the point where the grease can’t be distinguished from blood.\\nThe endless fighting was gone, leaving behind nothing but red upon the world.,"
+    },
+    "WP_PC_HND_ScissorSword": {
+      "name": "Proof of Humanity Handle",
+      "tooltip": "A giant scissor blade used by a Nameless puppet.\\nIt is a double-edged sword that can end one’s freedom, or grant it by cutting the strings of manipulation.,\nHuman’s,\nPuppets are tied to strings. Humans have cut their own strings.\\nThe boy made a choice and became human.,"
+    },
+    "WP_PC_HND_SevenSword": {
+      "name": "Seven-Coil Spring Sword Handle",
+      "tooltip": "A precious seven-coil spring sword that was stored in the Workshop tower.\\nEven Geppetto could not replicate this fine masterpiece.,\nEngraved,\nSeven ##s on seven blades.\\nThe text that remained engraved on the eastern relic inspired the Workshop technicians to make a masterpiece for this generation.,"
+    },
+    "WP_PC_HND_Shamshir": {
+      "name": "Dancer's Curved Sword Handle",
+      "tooltip": "A crescent curved sword handle used by dancers of the east.\\nAn eye-catching decoration hangs from it, fitting for a sword dance.,\nDance, moonlight, dance. Pray that my love returns when the sand scatters.\\nBut take care that my love’s head does not fall along with the tears.\\n- A poem left behind by an eastern sword dancer,\nMoonlight’s,"
+    },
+    "WP_PC_HND_ShieldSpear": {
+      "name": "Blind Man’s Double-Sided Spear Handle",
+      "tooltip": "Even after losing his eyesight, Noah did not give up on his duty to protect others.\\nThe blind Stalker added a shield to his cherished weapon and went to battle against the monsters.,\nIndomitable,\nThe handle of the altered spear used by the blind Stalker Noah.\\nThe shield attached to the handle allows special attacks to deflect enemy attacks.,"
+    },
+    "WP_PC_HND_Shovel": {
+      "name": "Military Shovel Handle",
+      "tooltip": "A military shovel handle made by Venigni Company.\\nIt was made to be foldable so it can be easily transported even during long marches.,\nIf you ask what gets on a military shovel most often, an innocent person would answer dirt.\\nA person who understands reality would answer human blood.,\nInnocent,"
+    },
+    "WP_PC_HND_SwordLance": {
+      "name": "Spear of Honor Handle",
+      "tooltip": "Honor, or Nothing.\\nThis was all the Bastards, who were both aristocrats and Stalkers, had left.,\nLast,\nThe handle of a rush lance ordered to be made by a Stalker of the Bastards.\\nThe brass handle has a rotating device that enhances rush attacks.,"
+    },
+    "WP_PC_HND_TransformGreatSword": {
+      "name": "Holy Sword of the Ark Handle",
+      "tooltip": "A special greatsword that was lying asleep in the St. Frangelico Cathedral.\\nIt can transform between a special greatsword and a glaive.,\nSaintess’,\nThe Ark Saintess’s weapon was reproduced for puppet use and it made a grand appearance at Krat events.\\nHowever, its legendary holiness could not be reproduced.,"
+    },
+    "WP_PC_HND_Trident": {
+      "name": "Trident of the Covenant Handle",
+      "tooltip": "A ritual trident that was lying asleep in the Relic of Trismegistus.\\nIt is presumed to have once belonged to a great warrior who served an ancient king.,\nGuardian’s,\nThe warrior of the sea vowed to protect the people from the cursed relic.\\nHe kept his vow even when his skin was mashed until it was green.,"
+    },
+    "WP_PC_HND_UmbrellaSword": {
+      "name": "Etiquette handle",
+      "tooltip": "A self-defense weapon adored by the leader of the Bastards.\\nIt can be disguised as an umbrella, but it bares its teeth in the moment of attack.,\nSocial dignity can be seen not only in the ballroom but also on the battlefield.\\nThe leader of the Bastards did not lose his poise on either stage.,\nSociety’s,"
+    },
+    "WP_PC_HND_DragonGlaive": {
+      "name": "Azure Dragon Crescent Glaive Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_GakGung": {
+      "name": "Lorenzini Bolt Blade Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Ballista": {
+      "name": "Royal Horn Bow Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_PinWheel": {
+      "name": "Maniac's Pinwheel Blade Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_FireRapier": {
+      "name": "Puppet of The Future Welder Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_GuardBat": {
+      "name": "La Vendetta Head Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_ThunderSword": {
+      "name": "Arche's Guardian Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_AcidHammer": {
+      "name": "Silent Evangelist's Mace Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_RoseSword": {
+      "name": "Monad's Rose Sword Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_IronClaw": {
+      "name": "Death's Talons Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_GunBlade": {
+      "name": "Pale Knight Handle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Flamberge": {
+      "name": "Wp Pc Hnd Flamberge",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Greatsword": {
+      "name": "Wp Pc Hnd Greatsword",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Guillotine": {
+      "name": "Wp Pc Hnd Guillotine",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Hammer": {
+      "name": "Wp Pc Hnd Hammer",
+      "tooltip": ""
+    },
+    "WP_PC_HND_HolySword": {
+      "name": "Wp Pc Hnd Holysword",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Katar": {
+      "name": "Wp Pc Hnd Katar",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Lance": {
+      "name": "Wp Pc Hnd Lance",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Lost": {
+      "name": "Wp Pc Hnd Lost",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Nail": {
+      "name": "Wp Pc Hnd Nail",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Nosferatu": {
+      "name": "Wp Pc Hnd Nosferatu",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Saw": {
+      "name": "Wp Pc Hnd Saw",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Shield": {
+      "name": "Wp Pc Hnd Shield",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Sickle": {
+      "name": "Wp Pc Hnd Sickle",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Slap": {
+      "name": "Wp Pc Hnd Slap",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Spear": {
+      "name": "Wp Pc Hnd Spear",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Steel": {
+      "name": "Wp Pc Hnd Steel",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Twinblade": {
+      "name": "Wp Pc Hnd Twinblade",
+      "tooltip": ""
+    },
+    "WP_PC_HND_WavySword": {
+      "name": "Wp Pc Hnd Wavysword",
+      "tooltip": ""
+    },
+    "WP_PC_HND_Wrench": {
+      "name": "Wp Pc Hnd Wrench",
+      "tooltip": ""
+    }
+  },
+  "blades": {
+    "WP_PC_BLD_AcidGreatsword": {
+      "name": "Acidic Great Curved Sword Blade",
+      "tooltip": "The Alchemists took notice of the fact that Carcass body fluids had an acidic quality.\\nAfter extensive research, they devised a weapon that dug into one’s body like a viper’s fangs and inflicted continuous damage.,\nTooth,"
+    },
+    "WP_PC_BLD_Baton": {
+      "name": "Krat Police Baton Head",
+      "tooltip": "A head from the self-defense batons used by Krat police.\\nThe hard cudgel can be used to bash all kinds of puppets.,\nAfter the violent protest with the factory labor union, it became customary for police batons in Krat to be painted black.\\nThe reason needs no explanation.,\nViolence,"
+    },
+    "WP_PC_BLD_Bayonet": {
+      "name": "Greatsword of Fate Blade",
+      "tooltip": "A greatsword blade made by refashioning a soldier puppet’s weapon.\\nEven when used as a bayonet, its unique bend keeps it from interfering with firing.,\nObsession,\nStalkers who have survived life-or-death situations can see the threads of prey.\\nThese threads are the sticky spiderwebs of obsession that they say are clearer the stronger the puppet is.,"
+    },
+    "WP_PC_BLD_ChainScythe": {
+      "name": "Puppet Ripper",
+      "tooltip": "A chain-sickle handle that once sprayed a bloody fog over Krat.\\nThe spring device allows the handler to extend or wind up the chain easily.,\nKrat has a legend about a grinning hedonist murderer.\\nThey say his heart was made of clockwork.,\nMemory,"
+    },
+    "WP_PC_BLD_Charkram": {
+      "name": "Uroboros’s Eye",
+      "tooltip": "A moon sword that was lying asleep in the Arche Abbey.\\nThey say this weapon was handcrafted by a legendary Alchemist.,\nLife,\nPhilippus Paracelsus was a legend even among the Alchemists.\\nThe moon sword he made by modeling the Uroboros mark symbolized wholeness.,"
+    },
+    "WP_PC_BLD_Cleaver": {
+      "name": "Master Chef’s Knife Blade",
+      "tooltip": "A Master Chef’s blade.\\nIt is short but good enough to slaughter puppets.,\nFeast,\nThe citizens who fought back during the Puppet Frenzy the most were cooks.\\nTheir knives that were once used to prepare feasts were repurposed to slaughter puppets.,"
+    },
+    "WP_PC_BLD_ClockSword": {
+      "name": "Clock Sword Blade",
+      "tooltip": "A sword blade made to commemorate the construction of the clocktower.\\nIt is sharpened to a point in the shape of a minute hand, making it effective for slashing and stabbing.,\nSouvenir,\nThe Clock Sword was made to commemorate the clocktower’s construction by using its minute hand.\\nBecause even its blade was engraved with antique ornamentation, people said it was a fitting commemorative item.,"
+    },
+    "WP_PC_BLD_ClockworkBlunt": {
+      "name": "Big Pipe Wrench Head",
+      "tooltip": "Might,\nThe head of a large pipe wrench made by Venigni Company.\\nThere are signs that the discarded tool was used as a weapon.,\nWhen the puppets suddenly attacked, technicians scrambled to make weapons.\\nIn need of something powerful, they looked toward the pipe wrench.,"
+    },
+    "WP_PC_BLD_CoilRod": {
+      "name": "Electric Coil Stick Head",
+      "tooltip": "Humans have always feared anything that excels beyond them.\\nPuppets were already their loyal servants, but humans have created a new natural enemy that is sure to attack their weaknesses.,\nNatural Enemy,\nThe head of a blunt weapon made by Venigni Company to destroy puppets.\\nThe coil releases a powerful current that causes lethal damage to puppets.,"
+    },
+    "WP_PC_BLD_CrystalAxe": {
+      "name": "Carcass Crystal Axe Blade",
+      "tooltip": "An experimental axe blade made by the Alchemists.\\nCarcass body fluid constantly oozes out from the rear canister.,\nFruition,\nThe Alchemists achieved the brilliant truth that they desired.\\nHowever, their achievements were sometimes made on the flesh and blood of humans.,"
+    },
+    "WP_PC_BLD_CrystalSpear": {
+      "name": "Acidic Crystal Spear Blade",
+      "tooltip": "A spear blade made from a sharpened Carcass spine crystal.\\nAcid oozes continuously from the blade to corrode enemies.,\nCuriosity,\nOne of the strengths of humans is their interest in turning anything into a weapon.\\nBut more than anything, it is also a terrible weakness.,"
+    },
+    "WP_PC_BLD_CrystalSword": {
+      "name": "Frozen Feast",
+      "tooltip": "An Ergo crystal sword blade made by an Alchemist.\\nThe untreated blade chips away with each impact, but when it stabilizes, it restores itself as if it can turn back time.,\nThe crystal that kept falling off the sword no matter how much the Alchemists worked at it was miraculously restored.\\nIt was as if it had been biding its time.,\nTime,"
+    },
+    "WP_PC_BLD_Dagger": {
+      "name": "Tyrant Murderer’s Dagger Blade",
+      "tooltip": "Hard Rule,\nIn the slums, one’s ability rules above all.\\nEven a powerful tyrant is helpless against a knife in his back.,\nThe blade of a dagger used for sneak attacks, popular among the poor who live on the streets.\\nIt is designed to make it easy for anyone to stab others.,"
+    },
+    "WP_PC_BLD_ElectricCutter": {
+      "name": "Circular Electric Chainsaw Blade",
+      "tooltip": "A circular saw blade made using Faraday's law of electromagnetic induction.\\nThe more successful it is at attacking, the faster the plate turns, increasing its electric blitz attack power.,\nThe circular saw blade with a generator attached was effective.\\nEven the strongest puppets could not withstand the wounds it caused.,"
+    },
+    "WP_PC_BLD_ElectricHammer": {
+      "name": "Coil Mjolnir Head",
+      "tooltip": "“I don’t know whether Venigni is a genius or a fool for using an item like this as a mere storage battery.”\\n-The opinion of a technician named Descartes on Venigni’s storage battery,\nA hammerhead modified by attaching Venigni’s storage battery.\\nErgo functions as a conductor so that a strong electric shock causes it to release a current.,\nGenius,"
+    },
+    "WP_PC_BLD_FireAxe": {
+      "name": "Fire Axe Blade",
+      "tooltip": "Proof,\nThe fire brigade protected Krat with everything they had to the very end.\\nThey lost their lives, but their axes remain in the city as evidence of their noble sacrifice.,\nThe Krat fire brigade’s close-order axe blade, painted red.\\nIt was crafted for versatility so that it can break anything.,"
+    },
+    "WP_PC_BLD_FirePickaxe": {
+      "name": "Exploding Pickaxe Blade",
+      "tooltip": "“Why am I using laborer puppets that cost so much money, you ask? Because we can’t have humans explode.”\\n- From a conversation with the Workshop laborer puppet supervisor,\nExplosion,\nThe blade of a Workshop laborer puppet’s mining tool.\\nAn explosive device has been added to the blade to break up the hard rock in the Ergo mines.,"
+    },
+    "WP_PC_BLD_FlameDagger": {
+      "name": "Salamander Dagger Blade",
+      "tooltip": "A dagger blade designed to make Ergo generate Overheat.\\nAn Ergo power source that emits heat is embedded in the back of the sword.,\nFlame,\nThe salamander symbolizes fire and purification.\\nIn that regard, the dagger was created for a special purification ritual regarding Alchemist defectors.,"
+    },
+    "WP_PC_BLD_FlameSword": {
+      "name": "Black Steel Cutter Blade",
+      "tooltip": "“Ergo. The fact that such an incredible mineral exists in Krat is a blessing from God. But how was this Ergo formed?”\\n- From Lorenzini Venigni’s notes,\nA metal cutter blade made by Venigni Company.\\nThe superheater device made from compressed Ergo crystal emits great heat, and it can even cut through hard armor with ease.,\nBlessing,"
+    },
+    "WP_PC_BLD_Glaive": {
+      "name": "Booster Glaive Blade",
+      "tooltip": "A glaive blade assembled by a Stalker by attaching booster equipment together.\\nBecause it’s a blade taken from a giant cutting machine, it is heavy but forceful.,\nRevenge,\nThe Puppet Frenzy birthed a generation that lost their families and swore revenge.\\nAxel, who went to war with his father’s paper cutter in hand, was no different.,"
+    },
+    "WP_PC_BLD_GreatAxe": {
+      "name": "Live Puppet’s Axe Blade",
+      "tooltip": "“I’ll show those hunks of scrap metal what true fear looks like.”\\nThe nightmarish axe that the Stalkers created caused even puppets to scream.,\nFear,\nThe blade of a bulky axe made from discarded puppet arms.\\nEach arm is fixed in place with wire, and the end result is decidedly grotesque.,"
+    },
+    "WP_PC_BLD_GreatSaw": {
+      "name": "Bone-Cutting Sawblade",
+      "tooltip": "A saw blade made by modifying a laborer puppet’s equipment.\\nIt is so bulky that it doesn’t see much use, and is coated in rust.,\nShark,\nTheir malicious blades were as jagged as a shark’s teeth.\\nThe aspirations of Stalkers to cleave puppets’ bones came true along with their notoriety.,"
+    },
+    "WP_PC_BLD_GreatSpear": {
+      "name": "City Longspear Blade",
+      "tooltip": "A spear blade fashioned in a hurry from a broken fence.\\nThe uniquely splayed spear blade is surprisingly effective.,\nArt,\nThe longspear that the people made in haste was crude but effective.\\nThe artist Bastian remarked that it was a work of art that represented the city of Krat.,"
+    },
+    "WP_PC_BLD_Halberd": {
+      "name": "Cursed Knight’s Halberd Blade",
+      "tooltip": "A halberd blade collected by a Krat aristocrat.\\nDespite being an old relic, it is sharpened to a fine point as if it was a present-day item.,\nCurse,\nHotel Krat was built from a cursed knight’s castle.\\nThey say that the golden tree that once captivated the knight is still asleep somewhere in the hotel.,"
+    },
+    "WP_PC_BLD_Hwando": {
+      "name": "Two Dragons Sword",
+      "tooltip": "A precious sword that was at the Grand Exhibition gallery.\\nThey say it was the saber of a commander from a quiet eastern land.,\nThe sea remembers the vow of the warrior.\\nThe general who rose up with the dragon to protect the people claimed a lonely victory in dozens of wars.,\nVow,"
+    },
+    "WP_PC_BLD_KkabiClub": {
+      "name": "Noblesse Oblige",
+      "tooltip": "A mystical cudgel made from an Ergo crystal tree.\\nWhile battering enemies, it emits spores, increasing the Ergo acquisition rate.,\nSong,\nThe Stalker who desired wealth made a contract with a devil that liked music to gain a cudgel.\\nAlong with this he was gifted with overflowing Ergo and the Petrification Disease.,"
+    },
+    "WP_PC_BLD_Kukri": {
+      "name": "Bramble Curved Sword Blade",
+      "tooltip": "A curved sword smuggled in from outside the city.\\nBecause the center of balance is near the point, it can bring great force to bear when swung.,\nThe Bramble Curved Sword is a weapon more precious to the warriors of the wilderness than their own lives.\\nIn Krat, however, it is nothing more than a unique import for the aristocrats.,\nThorn,"
+    },
+    "WP_PC_BLD_NoseStaff": {
+      "name": "Golden Lie",
+      "tooltip": "\\There are two kinds of lies. Yours is the lie that makes your nose long.\\\"\\nThe boy loved the fairy tale about the wooden puppet’s adventure.\\nAt least the wooden puppet’s father was kind.\",\nA mystical wooden rod obtained from the boy’s portrait.\\nFascinatingly, it extends and retracts at the whim of Geppetto’s puppet.,\nTree,"
+    },
+    "WP_PC_BLD_Rapier": {
+      "name": "Wintry Rapier's Blade",
+      "tooltip": "A rapier blade that specializes in sharp thrusts.\\nThe long, light blade is well suited for hit-and-runs.,\nHeart,\nPeople with cold hearts began wandering Krat long ago.\\nEveryone welcomed the changes that brought wealth, but they were bound to pay the price.,"
+    },
+    "WP_PC_BLD_RockDrill": {
+      "name": "Pistol Rock Drill Blade",
+      "tooltip": "A rock drill blade made by Venigni Company.\\nThe tip is coated with an alloy that makes destroying even rock easy.,\nErgo mining has been the central interest of Krat’s technicians for decades.\\nNo matter how much they mined with their various tools, the ore never ran dry.,\nSuspicion,"
+    },
+    "WP_PC_BLD_Saber": {
+      "name": "Puppet’s Saber Blade",
+      "tooltip": "A saber blade made by refashioning a soldier puppet’s weapon.\\nThe slightly bent blade has remarkable stability.,\nTears,\nThey say puppets do not shed tears because they do not have souls for vessels.\\n“If they had souls, they would have something to put tears and lies in.”,"
+    },
+    "WP_PC_BLD_ScissorSword": {
+      "name": "Proof of Humanity",
+      "tooltip": "A giant scissor blade used by a Nameless puppet.\\nIt is a double-edged sword that can end one’s freedom, or grant it by cutting the strings of manipulation.,\nChoice,\nPuppets are tied to strings. Humans have cut their own strings.\\nThe boy made a choice and became human.,"
+    },
+    "WP_PC_BLD_SevenSword": {
+      "name": "Seven-Coil Spring Sword",
+      "tooltip": "A precious seven-coil spring sword that was stored in the Workshop tower.\\nEven Geppetto could not replicate this fine masterpiece.,\nMasterpiece,\nSeven ##s on seven blades.\\nThe text that remained engraved on the eastern relic inspired the Workshop technicians to make a masterpiece for this generation.,"
+    },
+    "WP_PC_BLD_Shamshir": {
+      "name": "Dancer’s Curved Sword Blade",
+      "tooltip": "A crescent curved sword blade used by dancers of the east.\\nThe beautifully crafted blade is like a piece of art.,\nDance,\nThe dancers in the east are famous for sword dances that use curved swords.\\nTheir sword dance requires both power and technique, thus it is called an art of strength and beauty.,"
+    },
+    "WP_PC_BLD_ShieldSpear": {
+      "name": "Blind Man’s Double-Sided Spear Blade",
+      "tooltip": "A double-sided spear blade cherished by Noah the blind Stalker.\\nThe sharpened double blade vibrates like a tuning fork, which helps in battle.,\nInduction,\nNoah was aloof, even facing the blood-soaked darkness.\\nHis double-sided spear was still crying out and guiding him.,"
+    },
+    "WP_PC_BLD_Shovel": {
+      "name": "Military Shovel Blade",
+      "tooltip": "“If you don’t have a weapon to kill puppets with, use a shovel if you have to!”\\nStalkers followed the orders of their incompetent commander. However, the attack was not on their enemy but on him.,\nA military shovel blade made by Venigni Company.\\nThe shovel head was sharpened to a fine edge, so it no longer wants to be used as a tool.,\nBetrayal,"
+    },
+    "WP_PC_BLD_SwordLance": {
+      "name": "Spear of Honor Blade",
+      "tooltip": "A luxurious spear blade used by the Bastards.\\nAn elaborate pattern is engraved on the angled blade.,\nHonor,\nThey were abandoned by their families, but they couldn’t abandon their pride.\\nClutching nothing but their honor, the Bastards charged forward, spears in hand.,"
+    },
+    "WP_PC_BLD_TransformGreatSword": {
+      "name": "Holy Sword of the Ark",
+      "tooltip": "A special greatsword that was lying asleep in the St. Frangelico Cathedral.\\nIt can transform between a special greatsword and a glaive.,\nLegend,\nThe Ark Saintess’s weapon was reproduced for puppet use and it made a grand appearance at Krat events.\\nHowever, its legendary holiness could not be reproduced.,"
+    },
+    "WP_PC_BLD_Trident": {
+      "name": "Trident of the Covenant",
+      "tooltip": "A ritual trident that was lying asleep in the Relic of Trismegistus.\\nIt is presumed to have once belonged to a great warrior who served an ancient king.,\nDuty,\nThe warrior of the sea vowed to protect the people from the cursed relic.\\nHe kept his vow even when his skin was mashed until it was green.,"
+    },
+    "WP_PC_BLD_UmbrellaSword": {
+      "name": "Etiquette Blade",
+      "tooltip": "A self-defense weapon adored by the leader of the Bastards.\\nIt can be disguised as an umbrella, but it bares its teeth in the moment of attack.,\nDignity,\nEtiquette,\nSocial dignity can be seen not only in the ballroom but also on the battlefield.\\nThe leader of the Bastards did not lose his poise on either stage.,"
+    },
+    "WP_PC_BLD_DragonGlaive": {
+      "name": "Azure Dragon Crescent Glaive Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_GakGung": {
+      "name": "Lorenzini Bolt Blade Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Ballista": {
+      "name": "Royal Horn Bow Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_PinWheel": {
+      "name": "Maniac's Pinwheel Blade Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_FireRapier": {
+      "name": "Puppet of The Future Welder Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_GuardBat": {
+      "name": "La Vendetta Head Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_ThunderSword": {
+      "name": "Arche's Guardian Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_AcidHammer": {
+      "name": "Silent Evangelist's Mace Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_RoseSword": {
+      "name": "Monad's Rose Sword Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_IronClaw": {
+      "name": "Death's Talons Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_GunBlade": {
+      "name": "Pale Knight Blade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Flamberge": {
+      "name": "Wp Pc Bld Flamberge",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Greatsword": {
+      "name": "Wp Pc Bld Greatsword",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Guillotine": {
+      "name": "Wp Pc Bld Guillotine",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Hammer": {
+      "name": "Wp Pc Bld Hammer",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_HolySword": {
+      "name": "Wp Pc Bld Holysword",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Katar": {
+      "name": "Wp Pc Bld Katar",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Lance": {
+      "name": "Wp Pc Bld Lance",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Lost": {
+      "name": "Wp Pc Bld Lost",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Nail": {
+      "name": "Wp Pc Bld Nail",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Nosferatu": {
+      "name": "Wp Pc Bld Nosferatu",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Saw": {
+      "name": "Wp Pc Bld Saw",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Shield": {
+      "name": "Wp Pc Bld Shield",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Sickle": {
+      "name": "Wp Pc Bld Sickle",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Slap": {
+      "name": "Wp Pc Bld Slap",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Spear": {
+      "name": "Wp Pc Bld Spear",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Steel": {
+      "name": "Wp Pc Bld Steel",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Twinblade": {
+      "name": "Wp Pc Bld Twinblade",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_WavySword": {
+      "name": "Wp Pc Bld Wavysword",
+      "tooltip": ""
+    },
+    "WP_PC_BLD_Wrench": {
+      "name": "Wp Pc Bld Wrench",
+      "tooltip": ""
+    }
+  }
+}

@@ -42,6 +42,33 @@ def _to_friendly_label(raw: str) -> str:
     return raw
 
 
+
+
+def _to_save_state(existing_raw: str, enum_code: str) -> str:
+    # Convert enum suffix like 'E_IN_PROGRESS' into the same on-disk style the save already uses.
+    # Common styles seen:
+    #   - 'ELQuestState::E_IN_PROGRESS'   (UE enum string)
+    #   - 'E_IN_PROGRESS'                (suffix only)
+    #   - 'ELQUESTSTATE_E_IN_PROGRESS'   (normalized/legacy)
+    raw = (existing_raw or "").strip()
+    enum_code = (enum_code or "").strip()
+    if not enum_code:
+        return raw
+
+    # Prefer preserving UE-style prefix if present.
+    if "::" in raw:
+        prefix = raw.split("::", 1)[0].strip() or "ELQuestState"
+        return f"{prefix}::{enum_code}"
+
+    # If it looks like a normalized enum, restore to UE-style.
+    upper = raw.upper()
+    if upper.startswith("ELQUESTSTATE_") or "ELQUESTSTATE" in upper:
+        return f"ELQuestState::{enum_code}"
+
+    # Otherwise, keep suffix-only.
+    return enum_code
+
+
 class MissionTab(QWidget):
     COL_NAME = 0
     COL_STATE = 1
@@ -318,9 +345,13 @@ class MissionTab(QWidget):
     def _apply_state_change(self, row_idx: int, friendly_label: str):
         if not (0 <= row_idx < len(self._rows)):
             return
-        canonical = FRIENDLY_TO_ENUM.get(friendly_label.lower(), friendly_label)
-        apply_quest_edit(self._data, self._rows[row_idx], new_state=canonical)
-        self._rows[row_idx]["state"] = canonical
+        # Map friendly -> enum suffix
+        enum_suffix = FRIENDLY_TO_ENUM.get(friendly_label.lower(), friendly_label)
+        # Preserve whatever enum string style the save already uses for this row
+        existing_raw = str(self._rows[row_idx].get("state") or "")
+        new_state = _to_save_state(existing_raw, enum_suffix)
+        apply_quest_edit(self._data, self._rows[row_idx], new_state=new_state)
+        self._rows[row_idx]["state"] = new_state
 
     def _selected_rows(self) -> List[int]:
         if not self.table.selectionModel():

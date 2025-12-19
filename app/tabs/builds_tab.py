@@ -4,6 +4,11 @@ from typing import Any, Dict, List, Optional
 import copy
 import random
 
+from pathlib import Path
+import json
+import os
+import tempfile
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
@@ -12,6 +17,48 @@ from PyQt6.QtWidgets import (
 )
 
 JSON = Dict[str, Any]
+
+
+# ---------- persistent parts DB (seen handles/blades across saves) ----------
+def _norm_code(code: str) -> str:
+    return (code or "").strip().upper()
+
+def _default_db_path(filename: str) -> Path:
+    # Optional override
+    env = os.environ.get("LOP_USER_DB_PATH", "").strip()
+    if env:
+        p = Path(env)
+        return p if p.suffix.lower() == ".json" else (p / filename)
+
+    # Windows: %APPDATA%\LoPSaveEditor
+    appdata = os.environ.get("APPDATA", "").strip()
+    if appdata:
+        return Path(appdata) / "LoPSaveEditor" / filename
+
+    # Fallback: ~/.lop_save_editor
+    return Path.home() / ".lop_save_editor" / filename
+
+def _load_json(path: Path) -> Dict[str, Any]:
+    try:
+        if path.exists():
+            return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+def _atomic_write_json(path: Path, data: Dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_fd, tmp_name = tempfile.mkstemp(prefix=path.stem + ".", suffix=".tmp", dir=str(path.parent))
+    try:
+        with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2, sort_keys=True)
+        os.replace(tmp_name, path)
+    finally:
+        try:
+            if os.path.exists(tmp_name):
+                os.remove(tmp_name)
+        except Exception:
+            pass
 
 # ---------- tiny helpers ----------
 def _items_array(root: JSON) -> List[Dict[str, Any]]:
@@ -85,6 +132,13 @@ class BuildsTab(QWidget):
         self.build_rows: List[Dict[str, Any]] = []
         self.row_to_entry: Dict[int, Dict[str, Any]] = {}
         self._populating = False
+
+        # Persistent parts DB (accumulates parts seen across saves)
+        self._parts_db_path: Path = _default_db_path("weapon_parts_seen_db.json")
+        self._parts_db: Dict[str, Any] = {}
+        self._parts_db_dirty: bool = False
+        self._seen_handles: set[str] = set()
+        self._seen_blades: set[str] = set()
 
         self._all_handles: List[str] = []
         self._all_blades: List[str] = []
@@ -168,8 +222,57 @@ class BuildsTab(QWidget):
         self.data = data
         self.items = _items_array(data)
         self._reindex_builds()
+
+        # Load/merge persistent parts DB and record any parts seen in this save
+        self._load_parts_db()
+        for e in self.build_rows:
+            st = e.get("Struct", {})
+            self._note_part_seen(_read_name(st, "FirstCodeName_0"), kind="handle")
+            self._note_part_seen(_read_name(st, "SecondCodeName_0"), kind="blade")
+        self._flush_parts_db()
+
         self._collect_lookups()
         self._rebuild_table()
+
+
+    def _load_parts_db(self) -> None:
+        self._parts_db = _load_json(self._parts_db_path) or {}
+        # canonical sets
+        hs = self._parts_db.get("handles", [])
+        bs = self._parts_db.get("blades", [])
+        if not isinstance(hs, list): hs = []
+        if not isinstance(bs, list): bs = []
+        self._seen_handles = {c for c in (map(str, hs)) if c and str(c).strip()}
+        self._seen_blades  = {c for c in (map(str, bs)) if c and str(c).strip()}
+        self._parts_db_dirty = False
+
+    def _flush_parts_db(self) -> None:
+        if not self._parts_db_dirty:
+            return
+        payload = {
+            "handles": sorted({c.strip() for c in self._seen_handles if c and c.strip()}),
+            "blades":  sorted({c.strip() for c in self._seen_blades if c and c.strip()}),
+        }
+        # Keep any future fields, but ensure our keys are updated
+        if isinstance(self._parts_db, dict):
+            self._parts_db.update(payload)
+        else:
+            self._parts_db = payload
+        _atomic_write_json(self._parts_db_path, self._parts_db)
+        self._parts_db_dirty = False
+
+    def _note_part_seen(self, code: str, kind: str) -> None:
+        code = (code or "").strip()
+        if not code:
+            return
+        if kind == "handle":
+            if code not in self._seen_handles:
+                self._seen_handles.add(code)
+                self._parts_db_dirty = True
+        elif kind == "blade":
+            if code not in self._seen_blades:
+                self._seen_blades.add(code)
+                self._parts_db_dirty = True
 
     def _reindex_builds(self) -> None:
         self.build_rows = []
@@ -179,8 +282,11 @@ class BuildsTab(QWidget):
                 self.build_rows.append(e)
 
     def _collect_lookups(self) -> None:
-        # Only from visible weapon builds (keeps combos tidy)
-        handles, blades, slots = set(), set(), set(self._all_slots)
+        # Prefer persistent DB (parts ever seen), plus current save's weapon builds.
+        handles = set(self._seen_handles)
+        blades  = set(self._seen_blades)
+        slots   = set(self._all_slots)
+
         for e in self.build_rows:
             st = e.get("Struct", {})
             h = _read_name(st, "FirstCodeName_0")
@@ -190,10 +296,14 @@ class BuildsTab(QWidget):
             if b: blades.add(b)
             if s.startswith("ELEquipSlotType::"):
                 slots.add(s)
+
         self._all_handles = sorted(handles)
         self._all_blades  = sorted(blades)
         self._all_slots   = sorted(slots)
 
+        self.cb_handle.clear(); self.cb_handle.addItems(self._all_handles)
+        self.cb_blade.clear();  self.cb_blade.addItems(self._all_blades)
+        self.cb_slot.clear();   self.cb_slot.addItems(self._all_slots)
         self.cb_handle.clear(); self.cb_handle.addItems(self._all_handles)
         self.cb_blade.clear();  self.cb_blade.addItems(self._all_blades)
         self.cb_slot.clear();   self.cb_slot.addItems(self._all_slots)
@@ -254,6 +364,7 @@ class BuildsTab(QWidget):
         cb: QComboBox = self.tbl.cellWidget(row, 1)  # type: ignore
         new = (cb.currentText() or "").strip()
         _ensure_name(st, "FirstCodeName_0", new)
+        self._note_part_seen(new, kind="handle"); self._flush_parts_db()
         self._update_row_display(row, st)
         if self._current_row() == row:
             self.cb_handle.setCurrentText(new); self._refresh_display(st)
@@ -266,6 +377,7 @@ class BuildsTab(QWidget):
         cb: QComboBox = self.tbl.cellWidget(row, 2)  # type: ignore
         new = (cb.currentText() or "").strip()
         _ensure_name(st, "SecondCodeName_0", new)
+        self._note_part_seen(new, kind="blade"); self._flush_parts_db()
         self._update_row_display(row, st)
         if self._current_row() == row:
             self.cb_blade.setCurrentText(new); self._refresh_display(st)
@@ -342,6 +454,8 @@ class BuildsTab(QWidget):
 
         _ensure_name(st, "FirstCodeName_0", h)
         _ensure_name(st, "SecondCodeName_0", b)
+        self._note_part_seen(h, kind="handle"); self._note_part_seen(b, kind="blade"); self._flush_parts_db()
+        self._note_part_seen(h, kind="handle"); self._note_part_seen(b, kind="blade"); self._flush_parts_db()
         _ensure_enum(st, "EquipItemSlotType_0", "ELEquipSlotType", s)
         try: _ensure_int(st, "SharpnessPoint_0", int(sp or 0))
         except Exception:
@@ -432,6 +546,9 @@ class BuildsTab(QWidget):
         arr = _items_array(self.data)
         new_e = copy.deepcopy(src)
         st = new_e.setdefault("Struct", {})
+        self._note_part_seen(_read_name(st, "FirstCodeName_0"), kind="handle")
+        self._note_part_seen(_read_name(st, "SecondCodeName_0"), kind="blade")
+        self._flush_parts_db()
         if self.cb_autoid.isChecked():
             _ensure_int64(st, "UniqueId_0", self._generate_unique_id())
         else:

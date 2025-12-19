@@ -7,6 +7,8 @@ import os
 import sys
 import json
 
+from pathlib import Path
+import copy
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
@@ -69,6 +71,15 @@ class InventoryTab(QWidget):
         self._master_dupes: List[str] = []
         self._load_master_csv()
 
+
+        # --- persistent 'seen codes' database (across saves) ---
+        self._seen_db_dirty: bool = False
+        self._seen_db: Dict[str, Any] = {"version": 1, "codes": {}}
+        self._seen_codes: set[str] = set()
+        self._seen_db_path: Path = self._default_seen_db_path()
+        self._load_seen_db_into_memory()
+        # merge 'seen' labels into display dictionaries (CSV remains authoritative)
+        self._merge_seen_labels_into_master()
         # quick map: normalized ID -> canonical ID from CSV
         self._canon_by_norm: Dict[str, str] = {_norm_code(k): k for k in self.names.keys()}
 
@@ -245,23 +256,158 @@ class InventoryTab(QWidget):
             print("CSV load error:", e)
 
     # ---------- data load ----------
+
+    # ---------- persistent seen-db helpers ----------
+    def _default_seen_db_path(self) -> Path:
+        """Default location for persistent 'seen codes' database.
+
+        Controlled via LOP_USER_DB_PATH env var. If set to a directory, the file
+        is created inside it; if set to a file path, that file is used.
+        """
+        env = os.environ.get("LOP_USER_DB_PATH", "").strip()
+        if env:
+            p = Path(env).expanduser()
+            if p.is_dir():
+                return p / "inventory_seen_db.json"
+            return p
+
+        if sys.platform.startswith("win"):
+            base = Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming")))
+            return base / "LoPSaveEditor" / "inventory_seen_db.json"
+
+        return Path.home() / ".lop_save_editor" / "inventory_seen_db.json"
+
+    def _load_seen_db_into_memory(self) -> None:
+        # shape: {"version": 1, "codes": {"CODE": {"name": "...", "tip": "..."}, ...}}
+        self._seen_db = {"version": 1, "codes": {}}
+        self._seen_codes = set()
+        try:
+            path = self._seen_db_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if not path.exists():
+                return
+            raw = path.read_text(encoding="utf-8", errors="ignore").strip()
+            if not raw:
+                return
+            data = json.loads(raw)
+            codes = data.get("codes", {})
+            if isinstance(codes, list):
+                # legacy: ["CODE", ...]
+                codes = {str(c): {} for c in codes if c}
+            if not isinstance(codes, dict):
+                return
+            self._seen_db = {"version": int(data.get("version") or 1), "codes": codes}
+            self._seen_codes = set(map(str, codes.keys()))
+        except Exception:
+            # never break the editor if the db file is malformed
+            self._seen_db = {"version": 1, "codes": {}}
+            self._seen_codes = set()
+
+    def _save_seen_db_if_dirty(self) -> None:
+        if not getattr(self, "_seen_db_dirty", False):
+            return
+        try:
+            path = self._seen_db_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_suffix(path.suffix + ".tmp")
+            tmp.write_text(json.dumps(self._seen_db, ensure_ascii=False, indent=2), encoding="utf-8")
+            tmp.replace(path)
+            self._seen_db_dirty = False
+        except Exception:
+            # ignore; db is a convenience feature
+            pass
+
+    def _merge_seen_labels_into_master(self) -> None:
+        codes = (self._seen_db or {}).get("codes", {})
+        if not isinstance(codes, dict):
+            return
+        for code, meta in codes.items():
+            if not code:
+                continue
+            # canonicalize against master CSV ids when possible
+            norm = _norm_code(code)
+            canon = self._canon_by_norm.get(norm, code) if hasattr(self, "_canon_by_norm") else code
+            if canon in self.names:
+                continue
+            nm = ""
+            tip = ""
+            if isinstance(meta, dict):
+                nm = str(meta.get("name") or "")
+                tip = str(meta.get("tip") or "")
+            self.names[canon] = nm or _format_display(canon)
+            if tip:
+                self.tips[canon] = tip
+
+    def _remember_code(self, code: str) -> None:
+        if not code:
+            return
+        norm = _norm_code(code)
+        canon = self._canon_by_norm.get(norm, code)
+        if canon in self._seen_codes:
+            return
+        self._seen_codes.add(canon)
+        codes = self._seen_db.setdefault("codes", {})
+        if isinstance(codes, dict):
+            codes[canon] = {
+                "name": self.names.get(canon, _format_display(canon)),
+                "tip": self.tips.get(canon, ""),
+            }
+        # make sure UI dictionaries can reference it immediately
+        if canon not in self.names:
+            self.names[canon] = _format_display(canon)
+        self._canon_by_norm[_norm_code(canon)] = canon
+        self._seen_db_dirty = True
+
+    def _harvest_seen_from_loaded_save(self) -> None:
+        """Harvest item codes from the currently loaded save into the persistent db."""
+        if not self.data or not isinstance(self.inv_list, list):
+            return
+        for e in self.inv_list:
+            st = (e or {}).get("Struct", {}) if isinstance(e, dict) else {}
+            a = (st.get("FirstCodeName_0") or {}).get("Name", "")
+            b = (st.get("SecondCodeName_0") or {}).get("Name", "")
+            if isinstance(a, str) and a:
+                self._remember_code(a)
+            if isinstance(b, str) and b:
+                self._remember_code(b)
+        self._save_seen_db_if_dirty()
+
     def load_data(self, data: Dict[str, Any]) -> None:
         self.data = data
         self._refresh_inv_list()
         self._dedupe_inventory_in_place()
+        self._harvest_seen_from_loaded_save()
         self._rebuild_all_views()
 
     def _refresh_inv_list(self) -> None:
+        """Refresh self.inv_list using the *live* PlayerItems_0 array reference.
+
+        The previous implementation used a hard-coded path into CharacterItem_0. On some saves
+        (and after certain edits), that path can diverge from the actual serialized list that
+        uesave/from-json writes back, which means the UI rebuilds against a stale list and the
+        Missing tab does not update after bulk-add.
+        """
         self.inv_list = []
         self.entries_by_cat.clear()
         self.tables_by_cat.clear()
         self.row_entry_map_equipped.clear()
 
+        if not self.data:
+            return
+
         try:
+            # Prefer the path-agnostic DFS finder (returns the live list reference)
+            live = self._find_items_array_ref(self.data)
+            if isinstance(live, list):
+                self.inv_list = live
+                return
+
+            # Fallback to legacy hard-coded path (older/edge save shapes)
             root = self.data["root"]["properties"]["CharacterSaveData_0"]["Struct"]["Struct"]
             self.inv_list = root["CharacterItem_0"]["Struct"]["Struct"]["PlayerItems_0"]["Array"]["Struct"]["value"]
         except Exception:
             self.inv_list = []
+
 
     # ---------- inventory array finder (path-agnostic) ----------
     def _find_items_array_ref(self, root: dict) -> Optional[list]:
@@ -287,10 +433,38 @@ class InventoryTab(QWidget):
 
     # use the finder to ensure we always hit the serialized array
     def _ensure_items_array(self):
-        arr = self._find_items_array_ref(self.data or {})
-        if arr is None:
-            raise RuntimeError("Could not locate PlayerItems_0 array in the loaded save.")
-        return arr
+        """Return the *live* PlayerItems_0 list reference used by the save.
+
+        Some saves contain more than one PlayerItems_0-shaped array. We prefer the known
+        CharacterSaveData_0 → CharacterItem_0 path first (when present), then fall back
+        to a DFS search.
+        """
+        if not self.data:
+            raise RuntimeError("No save loaded.")
+        # 1) Preferred/known path
+        try:
+            root = self.data["root"]["properties"]["CharacterSaveData_0"]["Struct"]["Struct"]
+            arr = root["CharacterItem_0"]["Struct"]["Struct"]["PlayerItems_0"]["Array"]["Struct"]["value"]
+            if isinstance(arr, list):
+                return arr
+        except Exception:
+            pass
+
+        # 2) DFS inside CharacterSaveData_0 subtree
+        try:
+            root = self.data["root"]["properties"]["CharacterSaveData_0"]["Struct"]["Struct"]
+            arr = self._find_items_array_ref(root)
+            if isinstance(arr, list):
+                return arr
+        except Exception:
+            pass
+
+        # 3) DFS anywhere (last resort)
+        arr = self._find_items_array_ref(self.data)
+        if isinstance(arr, list):
+            return arr
+
+        raise RuntimeError("Could not locate PlayerItems_0 array in the loaded save.")
 
     # ---------- build detection & keys ----------
     def _is_build_struct(self, st: Dict[str, Any]) -> bool:
@@ -896,6 +1070,91 @@ class InventoryTab(QWidget):
             self._refresh_selected_cosmetic_row()
 
     # ---------- add item(s) ----------
+
+    def _next_unique_id(self, items: List[Dict[str, Any]]) -> int:
+        mx = 0
+        for e in items:
+            st = e.get("Struct", {})
+            u = (st.get("UniqueId_0") or {}).get("Int", None)
+            if isinstance(u, int):
+                mx = max(mx, u)
+        return mx + 1
+
+    def _pick_template_entry(self, items: List[Dict[str, Any]], want_cat: str) -> Optional[Dict[str, Any]]:
+        # Prefer an existing non-build entry in the same category (Keys/Lore, Cosmetics, etc.)
+        for e in items:
+            st = e.get("Struct", {})
+            if self._is_build_struct(st):
+                continue
+            code0 = (st.get("FirstCodeName_0") or {}).get("Name", "") or ""
+            if code0 and self._category_for_ingame(code0) == want_cat:
+                return e
+        # Fallback: any non-build entry
+        for e in items:
+            if not self._is_build_struct(e.get("Struct", {})):
+                return e
+        return None
+
+    def _make_inventory_entry(self, items: List[Dict[str, Any]], code: str) -> Dict[str, Any]:
+        """Create a new inventory entry by cloning an existing template row.
+
+        This preserves any extra fields/tags the game or serializer expects, which improves
+        reliability versus constructing a minimal struct from scratch.
+        """
+        norm = _norm_code(code)
+        canonical = self._canonical_id_for(norm, code)
+
+        want_cat = self._category_for_ingame(canonical)
+        tmpl = self._pick_template_entry(items, want_cat)
+
+        if tmpl is not None:
+            entry = copy.deepcopy(tmpl)
+            st = entry.setdefault("Struct", {})
+        else:
+            entry = {"Struct": {}}
+            st = entry["Struct"]
+
+        # FirstCodeName_0
+        st.setdefault("FirstCodeName_0", {"tag": {"data": {"Other": "NameProperty"}}})
+        st["FirstCodeName_0"]["Name"] = canonical
+        st["FirstCodeName_0"].setdefault("tag", {"data": {"Other": "NameProperty"}})
+
+        # Count_0: preserve template kind if possible
+        cur, kind = self._read_count_and_kind(st)
+        # If template had no Count_0, default to Int
+        if kind not in ("Int", "Int64"):
+            kind = "Int"
+        self._write_count_with_kind(st, 1, kind)
+
+        # Ensure equip slot enum exists and is NONE
+        st.setdefault(
+            "EquipItemSlotType_0",
+            {"tag": {"data": {"Enum": ["ELEquipSlotType", None]}}, "Enum": "ELEquipSlotType::E_NONE"},
+        )
+        st["EquipItemSlotType_0"]["Enum"] = "ELEquipSlotType::E_NONE"
+        st["EquipItemSlotType_0"]["tag"] = {"data": {"Enum": ["ELEquipSlotType", None]}}
+
+        # If template uses UniqueId_0 for this struct shape, make it unique.
+        if "UniqueId_0" in st and isinstance(st.get("UniqueId_0"), dict):
+            st["UniqueId_0"].clear()
+            st["UniqueId_0"]["Int"] = self._next_unique_id(items)
+            st["UniqueId_0"]["tag"] = {"data": {"Other": "IntProperty"}}
+
+        # This is not an assembled weapon/build
+        if "bIsWeapon_0" in st and isinstance(st.get("bIsWeapon_0"), dict):
+            st["bIsWeapon_0"].clear()
+            st["bIsWeapon_0"]["Bool"] = False
+            st["bIsWeapon_0"]["tag"] = {"data": {"Other": "BoolProperty"}}
+
+        # Remove any second-code remnants from templates (builds)
+        if "SecondCodeName_0" in st:
+            # For normal inventory rows, we do not want a second code.
+            try:
+                del st["SecondCodeName_0"]
+            except Exception:
+                pass
+
+        return entry
     def _canonical_id_for(self, norm: str, raw: str) -> str:
         return self._canon_by_norm.get(norm, raw)
 
@@ -922,19 +1181,13 @@ class InventoryTab(QWidget):
             if code0 == norm and not self._is_build_struct(e.get("Struct", {})):
                 st_e = e["Struct"]
                 cur, kind = self._read_count_and_kind(st_e)
-                newv = max(1, int(cur)) + 1
+                newv = (1 if int(cur) < 1 else int(cur) + 1)
                 self._write_count_with_kind(st_e, newv, kind)
                 self._refresh_inv_list(); self._dedupe_inventory_in_place(); self._rebuild_all_views()
                 return
 
         canonical = self._canonical_id_for(norm, code)
-        new_entry = {"Struct": {
-            "FirstCodeName_0": {"tag": {"data": {"Other": "NameProperty"}}, "Name": canonical},
-            "Count_0": {"tag": {"data": {"Other": "IntProperty"}}, "Int": 1},
-            "EquipItemSlotType_0": {"tag": {"data": {"Enum": ["ELEquipSlotType", None]}},
-                                    "Enum": "ELEquipSlotType::E_NONE"}
-        }}
-        items.append(new_entry)
+        items.append(self._make_inventory_entry(items, canonical))
         self._refresh_inv_list(); self._dedupe_inventory_in_place(); self._rebuild_all_views()
 
     def _add_items_batch(self, codes: List[str]) -> None:
@@ -959,21 +1212,14 @@ class InventoryTab(QWidget):
                     if _norm_code(e.get("Struct", {}).get("FirstCodeName_0", {}).get("Name", "")) == n and not self._is_build_struct(e.get("Struct", {})):
                         st_e = e["Struct"]
                         cur, kind = self._read_count_and_kind(st_e)
-                        newv = max(1, int(cur)) + 1
+                        newv = (1 if int(cur) < 1 else int(cur) + 1)
                         self._write_count_with_kind(st_e, newv, kind)
                         break
                 continue
             canonical = self._canonical_id_for(n, code)
-            items.append({
-                "Struct": {
-                    "FirstCodeName_0": {"tag": {"data": {"Other": "NameProperty"}}, "Name": canonical},
-                    "Count_0": {"tag": {"data": {"Other": "IntProperty"}}, "Int": 1},
-                    "EquipItemSlotType_0": {"tag": {"data": {"Enum": ["ELEquipSlotType", None]}},
-                                            "Enum": "ELEquipSlotType::E_NONE"}
-                }
-            })
-
-        self._refresh_inv_list(); self._dedupe_inventory_in_place(); self._rebuild_all_views()
+            items.append(self._make_inventory_entry(items, canonical))
+            have_norm.add(n)
+            self._refresh_inv_list(); self._dedupe_inventory_in_place(); self._rebuild_all_views()
 
     # ---------- raw access helpers (export/import) ----------
     def _iter_items(self):

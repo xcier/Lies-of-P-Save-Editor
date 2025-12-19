@@ -149,7 +149,7 @@ class AboutTab(QWidget):
             </style>
         </head>
         <body>
-            <h1>Lies of P Save Editor V1.01</h1>
+            <h1>Lies of P Save Editor V1.02</h1>
             <p>This save editor was created by <b>ProtoBuffers</b>.<br>
                It is an offline JSON-based editor that sits on top of <b>ueSave</b> and similar tooling.</p>
 
@@ -174,13 +174,16 @@ class AboutTab(QWidget):
                 <li>YouTube / Instagram / TikTok: <b>protobuffers</b></li>
             </ul>
 
-            <h2>Changelog (1.01)</h2>
+            
+            <h2>Changelog (1.02)</h2>
             <ul>
-                <li>Updated JSON tab to include the ability to load a second save for easy data comparing.</li>
-                <li>Cleaned Mission tab updated to load faster.</li>
-                <li>Updated window title to display correct version.</li>
-                <li>Fixed DarkMode/LightMode improper display.</li>
+                <li>Inventory tab updated to properly add and persist items.</li>
+                <li>Mission tab updated to support more reliable mission editing.</li>
+                <li>Weapon parts database now persists and merges across saves (duplicates removed).</li>
+                <li>NG+ changes should now be correctly reflected after saving and reloading.</li>
+                <li>Equip slots should work as long as you duplicate the effect being equipped.</li>
             </ul>
+
 
             <h2>Quick Start</h2>
             <ul>

@@ -28,6 +28,42 @@ def _ensure_dict(parent: Dict[str, Any], key: str) -> Dict[str, Any]:
     if key not in parent or not isinstance(parent[key], dict):
         parent[key] = {}
     return parent[key]
+def _get_intlike(node: Any, default: int = 0) -> int:
+    if not isinstance(node, dict):
+        return int(default)
+    if "Int64" in node:
+        try:
+            return int(node.get("Int64", default))
+        except Exception:
+            return int(default)
+    if "Int" in node:
+        try:
+            return int(node.get("Int", default))
+        except Exception:
+            return int(default)
+    return int(default)
+
+def _ensure_intlike(parent: Dict[str, Any], key: str, value: int) -> Dict[str, Any]:
+    """Ensure key exists and write an int preserving Int vs Int64 when possible."""
+    node = parent.get(key)
+    if not isinstance(node, dict):
+        node = {}
+        parent[key] = node
+
+    tag_other = (((node.get("tag") or {}).get("data") or {}).get("Other"))
+    prefer_i64 = ("Int64" in node) or (isinstance(tag_other, str) and "Int64" in tag_other)
+
+    tag = node.setdefault("tag", {}).setdefault("data", {})
+    tag["Other"] = "Int64Property" if prefer_i64 else "IntProperty"
+
+    if prefer_i64:
+        node.pop("Int", None)
+        node["Int64"] = int(value)
+    else:
+        node.pop("Int64", None)
+        node["Int"] = int(value)
+    return node
+
 
 
 class CharacterTab(QWidget):
@@ -243,38 +279,38 @@ class CharacterTab(QWidget):
 
         # deaths
         deaths_node = _g(self._char_struct, "YouDieCount_0", default={})
-        deaths_val = deaths_node.get("Int", 0) if isinstance(deaths_node, dict) else 0
+        deaths_val = _get_intlike(deaths_node, 0)
         self.death_spin.blockSignals(True); self.death_spin.setValue(int(deaths_val)); self.death_spin.blockSignals(False)
 
         # NG+
         ng_node = _g(self._char_struct, "NewGamePlus_Round_0", default={})
-        ng_val = ng_node.get("Int", 0) if isinstance(ng_node, dict) else 0
+        ng_val = _get_intlike(ng_node, 0)
         self.ng_spin.blockSignals(True); self.ng_spin.setValue(int(ng_val)); self.ng_spin.blockSignals(False)
         self.ng_label.show(); self.ng_spin.show()
 
         # Character Level
         lvl_node = _g(self._char_struct, "PlayerLevel_0", default={})
-        lvl_val = lvl_node.get("Int", 0) if isinstance(lvl_node, dict) else 0
+        lvl_val = _get_intlike(lvl_node, 0)
         self.level_spin.blockSignals(True); self.level_spin.setValue(int(lvl_val)); self.level_spin.blockSignals(False)
 
         # Ergo (AcquisitionSoul_0)
         ergo_node = _g(self._char_struct, "AcquisitionSoul_0", default={})
-        ergo_val = ergo_node.get("Int", 0) if isinstance(ergo_node, dict) else 0
+        ergo_val = _get_intlike(ergo_node, 0)
         self.ergo_spin.blockSignals(True); self.ergo_spin.setValue(int(ergo_val)); self.ergo_spin.blockSignals(False)
 
         # Ergo Needed to Level (NextLevelUpRequireSoul_0)
         need_node = _g(self._char_struct, "NextLevelUpRequireSoul_0", default={})
-        need_val = need_node.get("Int", 0) if isinstance(need_node, dict) else 0
+        need_val = _get_intlike(need_node, 0)
         self.ergo_needed_spin.blockSignals(True); self.ergo_needed_spin.setValue(int(need_val)); self.ergo_needed_spin.blockSignals(False)
 
         # Humanity Level
         hlevel_node = _g(self._char_struct, "HumanityLevel_0", default={})
-        hlevel_val = hlevel_node.get("Int", 0) if isinstance(hlevel_node, dict) else 0
+        hlevel_val = _get_intlike(hlevel_node, 0)
         self.humanity_level_spin.blockSignals(True); self.humanity_level_spin.setValue(int(hlevel_val)); self.humanity_level_spin.blockSignals(False)
 
         # Humanity
         h_node = _g(self._char_struct, "AcquisitionHumanity_0", default={})
-        h_val = h_node.get("Int", 0) if isinstance(h_node, dict) else 0
+        h_val = _get_intlike(h_node, 0)
         self.humanity_spin.blockSignals(True); self.humanity_spin.setValue(int(h_val)); self.humanity_spin.blockSignals(False)
 
         # Skill (DefaultStatCodeName_0.Name)
@@ -292,7 +328,7 @@ class CharacterTab(QWidget):
 
         # NEW: Total Damage Taken
         t_node = _g(self._char_struct, "TotalReceiveDamage_0", default={})
-        t_val = t_node.get("Int", 0) if isinstance(t_node, dict) else 0
+        t_val = _get_intlike(t_node, 0)
         self.total_damage_spin.blockSignals(True); self.total_damage_spin.setValue(int(t_val)); self.total_damage_spin.blockSignals(False)
 
         # NEW: Lamp toggle
@@ -315,38 +351,31 @@ class CharacterTab(QWidget):
 
     def _on_death_changed(self, value: int):
         if not isinstance(self._char_struct, dict): return
-        node = _ensure_dict(self._char_struct, "YouDieCount_0")
-        node["Int"] = int(value)
+        node = _ensure_intlike(self._char_struct, "YouDieCount_0", int(value))
 
     def _on_ng_changed(self, value: int):
         if not isinstance(self._char_struct, dict): return
-        node = _ensure_dict(self._char_struct, "NewGamePlus_Round_0")
-        node["Int"] = int(value)
+        node = _ensure_intlike(self._char_struct, "NewGamePlus_Round_0", int(value))
 
     def _on_level_changed(self, value: int):
         if not isinstance(self._char_struct, dict): return
-        node = _ensure_dict(self._char_struct, "PlayerLevel_0")
-        node["Int"] = int(value)
+        node = _ensure_intlike(self._char_struct, "PlayerLevel_0", int(value))
 
     def _on_ergo_changed(self, value: int):
         if not isinstance(self._char_struct, dict): return
-        node = _ensure_dict(self._char_struct, "AcquisitionSoul_0")
-        node["Int"] = int(value)
+        node = _ensure_intlike(self._char_struct, "AcquisitionSoul_0", int(value))
 
     def _on_ergo_needed_changed(self, value: int):
         if not isinstance(self._char_struct, dict): return
-        node = _ensure_dict(self._char_struct, "NextLevelUpRequireSoul_0")
-        node["Int"] = int(value)
+        node = _ensure_intlike(self._char_struct, "NextLevelUpRequireSoul_0", int(value))
 
     def _on_humanity_level_changed(self, value: int):
         if not isinstance(self._char_struct, dict): return
-        node = _ensure_dict(self._char_struct, "HumanityLevel_0")
-        node["Int"] = int(value)
+        node = _ensure_intlike(self._char_struct, "HumanityLevel_0", int(value))
 
     def _on_humanity_changed(self, value: int):
         if not isinstance(self._char_struct, dict): return
-        node = _ensure_dict(self._char_struct, "AcquisitionHumanity_0")
-        node["Int"] = int(value)
+        node = _ensure_intlike(self._char_struct, "AcquisitionHumanity_0", int(value))
 
     def _on_skill_changed(self, name: str):
         if not isinstance(self._char_struct, dict): return
@@ -358,8 +387,7 @@ class CharacterTab(QWidget):
 
     def _on_total_damage_changed(self, value: int):
         if not isinstance(self._char_struct, dict): return
-        node = _ensure_dict(self._char_struct, "TotalReceiveDamage_0")
-        node["Int"] = int(value)
+        node = _ensure_intlike(self._char_struct, "TotalReceiveDamage_0", int(value))
 
     def _on_lamp_changed(self, state: int):
         if not isinstance(self._char_struct, dict): return
