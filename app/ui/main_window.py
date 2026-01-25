@@ -18,7 +18,7 @@ from app.core.cheats import (
     insane_stats,
     godmode,
     max_currency,
-    unlock_all_locations,
+    unlock_all_locations,    INT32_MAX,
 )
 from app.core.file_manager import ensure_uesave_ok
 from app.utils.resources import find_app_icon
@@ -629,6 +629,15 @@ class MainWindow(QMainWindow):
         if not self.data or getattr(self, "_busy", False):
             return
 
+        # Commit any in-progress editor widgets (QLineEdit, QSpinBox, etc.)
+        # so values are written before we serialize.
+        try:
+            fw = QApplication.focusWidget()
+            if fw is not None:
+                fw.clearFocus()
+        except Exception:
+            pass
+
         default = os.path.splitext(os.path.basename(self.current_file or ""))[0] + ".sav"
         target = self._choose_save_path("Save .sav As", default, "Unreal Save (*.sav)")
         if not target:
@@ -773,7 +782,7 @@ class MainWindow(QMainWindow):
     def _cheat_max_currency(self):
         if not self.data:
             QMessageBox.information(self, "MAX CURRENCY", "Please load Account#"); return
-        changed = max_currency(self.data, 999_999_999)
+        changed = max_currency(self.data, INT32_MAX)
         if changed > 0:
             self._mark_dirty(True)
             QMessageBox.information(self, "MAX CURRENCY", f"Cheat applied.\nSet {changed} values.")

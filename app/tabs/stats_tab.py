@@ -7,6 +7,9 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QGroupBox, QFormLayout, QLabel, QSpinBox
 )
 
+
+INT32_MAX = (2**31) - 1
+
 # ------------- helpers -------------
 
 def _lk(d: Dict[str, Any]) -> Dict[str, str]:
@@ -144,7 +147,7 @@ class StatsTab(QWidget):
         f2.setSpacing(12)
         for raw_name, nice in SECOND_CANONICAL:
             spin = QSpinBox()
-            spin.setRange(0, 999999999)
+            spin.setRange(0, INT32_MAX)
             spin.valueChanged.connect(lambda v, rn=raw_name: self._on_second_direct_changed(rn, v))
             f2.addRow(QLabel(f"{nice}:").setFont(QFont("Segoe UI", 10)) or QLabel(f"{nice}:"), spin)
             self._second_spins_by_name[raw_name] = spin
@@ -210,7 +213,7 @@ class StatsTab(QWidget):
             spin = self._second_spins_by_name[canonical]
             spin.blockSignals(True)
             val = int(self._second_entry_by_name[canonical].get("Int", 0) or 0)
-            spin.setValue(max(0, min(999999999, val)))
+            spin.setValue(max(0, min(INT32_MAX, val)))
             spin.blockSignals(False)
 
     # --- change handlers ---
@@ -251,4 +254,4 @@ class StatsTab(QWidget):
             return
         actual_key = self._second_actual_key.get(canonical, canonical)
         node = _ensure_int_property(self._char_struct, actual_key)
-        node["Int"] = int(max(0, min(999999999, value)))
+        node["Int"] = int(max(0, min(INT32_MAX, value)))

@@ -202,11 +202,10 @@ def insane_stats(data: JSON, *, dry_run: bool = False) -> Dict[str, int]:
 
     for key, val in (
         ("PlayerLevel_0",                 999),
-        ("AcquisitionSoul_0",             999_999_999),
+        ("AcquisitionSoul_0",             INT32_MAX),
         ("NextLevelUpRequireSoul_0",      0),
         ("HumanityLevel_0",               999),
-        ("AcquisitionHumanity_0",         999_999_999),
-        ("NewGamePlus_Round_0",           999),
+        ("AcquisitionHumanity_0",         INT32_MAX),
     ):
         if _set_int(_ensure_int_property(ch, key), val, apply=not dry_run):
             counters["character"] += 1
@@ -234,7 +233,7 @@ def insane_stats(data: JSON, *, dry_run: bool = False) -> Dict[str, int]:
         "SecondStat_PulseRechargePoint_0", "SecondStat_PulseRecharge_0",
     )
     for k in secondary:
-        if _set_int(_ensure_int_property(ch, k), 999_999_999, apply=not dry_run):
+        if _set_int(_ensure_int_property(ch, k), INT32_MAX, apply=not dry_run):
             counters["stats_secondary"] += 1
 
     return counters
