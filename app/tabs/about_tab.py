@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import Optional
 
+from app.core.version import APP_NAME, VERSION
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QTextBrowser
@@ -103,53 +105,56 @@ class AboutTab(QWidget):
         You can tweak wording without worrying about theme – colors come
         from apply_theme().
         """
-        html = """
+        # NOTE: This is an f-string because we inject APP_NAME / VERSION.
+        # Any *literal* braces inside the CSS must be escaped as {{ and }}
+        # (otherwise Python interprets them as f-string replacement fields).
+        html = f"""
         <html>
         <head>
             <style>
-                body {
+                body {{
                     margin: 0;
                     padding: 0;
                     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
                     line-height: 1.5;
                     font-size: 10pt;
-                }
-                h1 {
+                }}
+                h1 {{
                     margin-top: 0;
                     margin-bottom: 8px;
                     font-size: 14pt;
-                }
-                h2 {
+                }}
+                h2 {{
                     margin-top: 16px;
                     margin-bottom: 4px;
                     font-size: 12pt;
-                }
-                h3 {
+                }}
+                h3 {{
                     margin-top: 12px;
                     margin-bottom: 2px;
                     font-size: 11pt;
-                }
-                p {
+                }}
+                p {{
                     margin: 4px 0;
-                }
-                ul {
+                }}
+                ul {{
                     margin: 4px 0 4px 20px;
                     padding: 0;
-                }
-                li {
+                }}
+                li {{
                     margin: 2px 0;
-                }
-                .small {
+                }}
+                .small {{
                     font-size: 8.5pt;
                     opacity: 0.85;
-                }
-                .mono {
+                }}
+                .mono {{
                     font-family: "Consolas", "Fira Code", monospace;
-                }
+                }}
             </style>
         </head>
         <body>
-            <h1>Lies of P Save Editor V1.02</h1>
+            <h1>{APP_NAME} V{VERSION}</h1>
             <p>This save editor was created by <b>ProtoBuffers</b>.<br>
                It is an offline JSON-based editor that sits on top of <b>ueSave</b> and similar tooling.</p>
 
@@ -173,8 +178,14 @@ class AboutTab(QWidget):
                 <li>Cash App: <span class="mono">$xcier</span></li>
                 <li>YouTube / Instagram / TikTok: <b>protobuffers</b></li>
             </ul>
+            <h2>Changelog (1.03)</h2>
+            <ul>
+                <li>Created weapon/part database (50+ weapons and 150+ buildable parts) accessible from the Inventory → Weapons tooling.</li>
+                <li>Updated Insane Stats cheat to no longer set NG+ to 999.</li>
+                <li>Updated Insane Stats cheat so secondary stat values can be pushed to max 32-bit (2,147,483,647).</li>
+                <li>Updated secondary stats and inventory numeric editors to allow values up to 2,147,483,647.</li>
+            </ul>
 
-            
             <h2>Changelog (1.02)</h2>
             <ul>
                 <li>Inventory tab updated to properly add and persist items.</li>
@@ -183,9 +194,7 @@ class AboutTab(QWidget):
                 <li>NG+ changes should now be correctly reflected after saving and reloading.</li>
                 <li>Equip slots should work as long as you duplicate the effect being equipped.</li>
             </ul>
-
-
-            <h2>Quick Start</h2>
+<h2>Quick Start</h2>
             <ul>
                 <li>Go to <b>File</b> → <b>Open…</b> and select a <span class="mono">.sav</span> or JSON file.</li>
                 <li>Edit values in the tabs: Character, Stats, Currency, Inventory, Missions, etc.</li>

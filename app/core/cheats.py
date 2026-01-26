@@ -206,7 +206,7 @@ def insane_stats(data: JSON, *, dry_run: bool = False) -> Dict[str, int]:
         ("NextLevelUpRequireSoul_0",      0),
         ("HumanityLevel_0",               999),
         ("AcquisitionHumanity_0",         INT32_MAX),
-    ):
+):
         if _set_int(_ensure_int_property(ch, key), val, apply=not dry_run):
             counters["character"] += 1
 
@@ -240,7 +240,7 @@ def insane_stats(data: JSON, *, dry_run: bool = False) -> Dict[str, int]:
 
 def max_currency(
     data: JSON,
-    max_value: int = 999_999_999,
+    max_value: int = INT32_MAX,
     *,
     create_missing: bool = True,
     dry_run: bool = False

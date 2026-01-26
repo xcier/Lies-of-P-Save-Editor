@@ -13,12 +13,13 @@ from PyQt6.QtWidgets import (
 )
 
 from app.core.settings import Settings
+from app.core.version import APP_NAME, VERSION, AUTHOR_LINE
 from app.core.cheats import (
     auto_plat_achievements,
     insane_stats,
     godmode,
     max_currency,
-    unlock_all_locations,    INT32_MAX,
+    unlock_all_locations,
 )
 from app.core.file_manager import ensure_uesave_ok
 from app.utils.resources import find_app_icon
@@ -213,8 +214,8 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        # --- VERSION BUMPED TO V1.01 ---
-        self.setWindowTitle("Lies of P Save Editor V1.01 Created by ProtoBuffers[*]")
+        # --- VERSION ---
+        self.setWindowTitle(f"{APP_NAME} V{VERSION} {AUTHOR_LINE}[*]")
         self.resize(1180, 760)
 
         # icon
@@ -629,15 +630,6 @@ class MainWindow(QMainWindow):
         if not self.data or getattr(self, "_busy", False):
             return
 
-        # Commit any in-progress editor widgets (QLineEdit, QSpinBox, etc.)
-        # so values are written before we serialize.
-        try:
-            fw = QApplication.focusWidget()
-            if fw is not None:
-                fw.clearFocus()
-        except Exception:
-            pass
-
         default = os.path.splitext(os.path.basename(self.current_file or ""))[0] + ".sav"
         target = self._choose_save_path("Save .sav As", default, "Unreal Save (*.sav)")
         if not target:
@@ -782,7 +774,7 @@ class MainWindow(QMainWindow):
     def _cheat_max_currency(self):
         if not self.data:
             QMessageBox.information(self, "MAX CURRENCY", "Please load Account#"); return
-        changed = max_currency(self.data, INT32_MAX)
+        changed = max_currency(self.data, 999_999_999)
         if changed > 0:
             self._mark_dirty(True)
             QMessageBox.information(self, "MAX CURRENCY", f"Cheat applied.\nSet {changed} values.")
@@ -978,8 +970,8 @@ class MainWindow(QMainWindow):
         self._refresh_title()
 
     def _refresh_title(self):
-        # --- VERSION STRING UPDATED HERE TOO ---
-        base = "Lies of P Save Editor V1.01 Created by ProtoBuffers"
+        # --- VERSION ---
+        base = f"{APP_NAME} V{VERSION} {AUTHOR_LINE}"
         try:
             alias = (self.character_tab.alias_combo.currentText() or "").strip()
             if not alias:

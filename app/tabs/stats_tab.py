@@ -7,9 +7,6 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QGroupBox, QFormLayout, QLabel, QSpinBox
 )
 
-
-INT32_MAX = (2**31) - 1
-
 # ------------- helpers -------------
 
 def _lk(d: Dict[str, Any]) -> Dict[str, str]:
@@ -78,6 +75,8 @@ def _ensure_enum_property(container: Dict[str, Any], key: str, full_enum_value: 
     return node
 
 # ------------- constants -------------
+
+INT32_MAX = (2**31) - 1
 
 LABELS_FIRST: List[Tuple[str,str]] = [
     ("Vitality",  "E_VITALITY"),

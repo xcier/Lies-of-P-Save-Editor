@@ -11,15 +11,14 @@ from pathlib import Path
 import copy
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
-
-INT32_MAX = 2_147_483_647
-INT32_MIN = -2_147_483_648
 from PyQt6.QtWidgets import (
     QWidget, QSplitter, QHBoxLayout, QVBoxLayout, QTabWidget,
     QTableWidget, QTableWidgetItem, QHeaderView, QGroupBox, QFormLayout,
     QLabel, QLineEdit, QCheckBox, QMessageBox, QToolButton, QStyle,
     QPushButton, QFileDialog, QTreeWidget, QTreeWidgetItem, QComboBox
 )
+
+from app.core.weapon_parts_db import WeaponPartsDB
 
 # -------- simple helpers --------
 
@@ -54,6 +53,8 @@ def _count_from_struct(st: Dict[str, Any]) -> int:
     except Exception:
         return 0
 
+INT32_MAX = (2**31) - 1
+
 UNION_KEYS = ("Int", "Int64", "Bool", "Name", "Str", "Enum")
 ELE_SLOT_RE = re.compile(r"^ELEquipSlotType::E_(?!NONE\b).+", re.IGNORECASE)
 
@@ -86,20 +87,9 @@ class InventoryTab(QWidget):
         # quick map: normalized ID -> canonical ID from CSV
         self._canon_by_norm: Dict[str, str] = {_norm_code(k): k for k in self.names.keys()}
 
-        # --- persistent weapon templates database (across saves) ---
-        # Stores full weapon entry templates observed in any loaded save. Used to re-add weapons
-        # that may not exist in the current save without requiring master CSV coverage.
-        self._weapon_db_dirty: bool = False
-        self._weapon_db: Dict[str, Any] = {"version": 1, "weapons": {}}  # sig -> record
-        self._weapon_db_keys: set[str] = set()
-        self._weapon_db_path: Path = self._default_weapon_db_path()
-        self._load_weapon_db_into_memory()
-
-
         # data
         self.data: Optional[Dict[str, Any]] = None
         self.inv_list: List[Dict[str, Any]] = []
-        self._last_selected = None  # (cat: str, row: int, tbl: QTableWidget)
         self.entries_by_cat: Dict[str, List[Dict[str, Any]]] = {}
         self.tables_by_cat: Dict[str, QTableWidget] = {}
         self.row_entry_map_equipped: Dict[int, Dict[str, Any]] = {}
@@ -172,38 +162,41 @@ class InventoryTab(QWidget):
         self.tbl_equipped.itemSelectionChanged.connect(self._equipped_selected)
         self.tabs.addTab(self.tbl_equipped, "Equipped")
 
-
-        # ----- Weapon Database (observed across saves) -----
-        # Built as a reusable page; it is inserted next to the Weapons tab during view rebuild.
+        # ----- Weapon/Part DB tab (buildable parts database) -----
+        self.weapon_db = None
         self.weapon_db_page = QWidget()
-        wdv = QVBoxLayout(self.weapon_db_page)
-        wdv.setContentsMargins(0, 0, 0, 0)
-
-        wdb_top = QHBoxLayout()
-        self.weapon_db_filter = QLineEdit()
-        self.weapon_db_filter.setPlaceholderText("Search weapon database…")
-        self.btn_weapon_db_add_selected = QPushButton("Add Selected")
-        self.btn_weapon_db_remove_selected = QPushButton("Remove Selected")
-        wdb_top.addWidget(self.weapon_db_filter, 1)
-        wdb_top.addWidget(self.btn_weapon_db_add_selected, 0)
-        wdb_top.addWidget(self.btn_weapon_db_remove_selected, 0)
-        wdv.addLayout(wdb_top)
-
-        self.tbl_weapon_db = QTableWidget(0, 5)
-        self.tbl_weapon_db.setAlternatingRowColors(True)
-        self.tbl_weapon_db.setHorizontalHeaderLabels(["Name", "Handle", "Blade", "Sharp", "Add"])
-        wh = self.tbl_weapon_db.horizontalHeader()
-        wh.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        wh.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        wh.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        wh.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        wh.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        self.tbl_weapon_db.cellClicked.connect(self._weapon_db_clicked)
-        wdv.addWidget(self.tbl_weapon_db)
-
+        wv = QVBoxLayout(self.weapon_db_page)
+        wh = QHBoxLayout()
+        self.weapon_db_filter = QLineEdit(self)
+        self.weapon_db_filter.setPlaceholderText("Search weapon parts (name or code)…")
         self.weapon_db_filter.textChanged.connect(self._filter_weapon_db)
-        self.btn_weapon_db_add_selected.clicked.connect(self._weapon_db_add_selected_clicked)
-        self.btn_weapon_db_remove_selected.clicked.connect(self._weapon_db_remove_selected_clicked)
+        wh.addWidget(self.weapon_db_filter, 1)
+        wv.addLayout(wh)
+
+        self.tbl_weapon_db = QTableWidget(0, 3)
+        self.tbl_weapon_db.setAlternatingRowColors(True)
+        self.tbl_weapon_db.setHorizontalHeaderLabels(["Name", "Type", "Add"])
+        whdr = self.tbl_weapon_db.horizontalHeader()
+        whdr.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        whdr.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        whdr.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        try:
+            self.tbl_weapon_db.setSortingEnabled(True)
+        except Exception:
+            pass
+        wv.addWidget(self.tbl_weapon_db)
+
+        self.tabs.addTab(self.weapon_db_page, "Weapon/Part DB")
+
+        # init DB (works in dev + frozen)
+        try:
+            db_json = self._resolve_weapon_db_json("app/resources/weapon_parts_db.json")
+            settings = getattr(self.main_window, "settings", None)
+            self.weapon_db = WeaponPartsDB(Path(db_json), settings=settings)
+        except Exception:
+            self.weapon_db = None
+
+        self._rebuild_weapon_db_table()
 
 
         # right: details
@@ -267,6 +260,42 @@ class InventoryTab(QWidget):
             os.path.join(dev_base, "app", "resources", "item_list.csv"),
             os.path.join(dev_base, "item_list.csv"),
             os.path.join(dev_base, "app", "item_list.csv"),
+        ]
+
+        for p in candidates:
+            if os.path.exists(p):
+                return p
+        return rel_or_abs
+
+
+    def _resolve_weapon_db_json(self, rel_or_abs: str) -> str:
+        """Resolve weapon_parts_db.json in both dev and frozen builds."""
+        if os.path.isabs(rel_or_abs) and os.path.exists(rel_or_abs):
+            return rel_or_abs
+
+        candidates: List[str] = []
+
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            base = getattr(sys, '_MEIPASS')
+            candidates += [
+                os.path.join(base, "app", "resources", "weapon_parts_db.json"),
+                os.path.join(base, "weapon_parts_db.json"),
+                os.path.join(base, "app", "weapon_parts_db.json"),
+            ]
+
+        exe_dir = os.path.dirname(getattr(sys, 'executable', '') or '')
+        if exe_dir:
+            candidates += [
+                os.path.join(exe_dir, "app", "resources", "weapon_parts_db.json"),
+                os.path.join(exe_dir, "weapon_parts_db.json"),
+                os.path.join(exe_dir, "app", "weapon_parts_db.json"),
+            ]
+
+        dev_base = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+        candidates += [
+            os.path.join(dev_base, "app", "resources", "weapon_parts_db.json"),
+            os.path.join(dev_base, "weapon_parts_db.json"),
+            os.path.join(dev_base, "app", "weapon_parts_db.json"),
         ]
 
         for p in candidates:
@@ -420,393 +449,11 @@ class InventoryTab(QWidget):
                 self._remember_code(b)
         self._save_seen_db_if_dirty()
 
-    # ---------- persistent weapon-db helpers ----------
-    def _default_weapon_db_path(self) -> Path:
-        """Default location for persistent weapon templates database.
-
-        Controlled via LOP_USER_DB_PATH env var. If set to a directory, the file
-        is created inside it; if set to a file path, that file is used.
-        """
-        env = os.environ.get("LOP_USER_DB_PATH", "").strip()
-        if env:
-            p = Path(env).expanduser()
-            if p.is_dir():
-                return p / "weapon_db.json"
-            return p
-
-        if sys.platform.startswith("win"):
-            base = Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming")))
-            return base / "LoPSaveEditor" / "weapon_db.json"
-
-        return Path.home() / ".lop_save_editor" / "weapon_db.json"
-
-    def _load_weapon_db_into_memory(self) -> None:
-        # shape: {"version": 1, "weapons": {"sig": {"display": "...", "entry": {...}, ...}, ...}}
-        self._weapon_db = {"version": 1, "weapons": {}}
-        self._weapon_db_keys = set()
-        try:
-            path = self._weapon_db_path
-            path.parent.mkdir(parents=True, exist_ok=True)
-            if not path.exists():
-                return
-            raw = path.read_text(encoding="utf-8", errors="ignore").strip()
-            if not raw:
-                return
-            data = json.loads(raw)
-            weapons = data.get("weapons", {})
-            if isinstance(weapons, list):
-                # legacy (unexpected): [{"sig": "...", ...}, ...]
-                tmp: Dict[str, Any] = {}
-                for it in weapons:
-                    if isinstance(it, dict) and it.get("sig"):
-                        tmp[str(it["sig"])] = {k: v for k, v in it.items() if k != "sig"}
-                weapons = tmp
-            if not isinstance(weapons, dict):
-                return
-            self._weapon_db = {"version": int(data.get("version") or 1), "weapons": weapons}
-            self._weapon_db_keys = set(map(str, weapons.keys()))
-        except Exception:
-            # never break the editor if the db file is malformed
-            self._weapon_db = {"version": 1, "weapons": {}}
-            self._weapon_db_keys = set()
-
-    def _save_weapon_db_if_dirty(self) -> None:
-        if not getattr(self, "_weapon_db_dirty", False):
-            return
-        try:
-            path = self._weapon_db_path
-            path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_suffix(path.suffix + ".tmp")
-            tmp.write_text(json.dumps(self._weapon_db, ensure_ascii=False, indent=2), encoding="utf-8")
-            tmp.replace(path)
-            self._weapon_db_dirty = False
-        except Exception:
-            # ignore; db is a convenience
-            pass
-
-    def _weapon_sig_for_entry(self, st: Dict[str, Any]) -> str:
-        a = (st.get("FirstCodeName_0") or {}).get("Name", "") or ""
-        b = (st.get("SecondCodeName_0") or {}).get("Name", "") or ""
-        # canonicalize against CSV when possible
-        a = self._canon_by_norm.get(_norm_code(a), a)
-        b = self._canon_by_norm.get(_norm_code(b), b) if b else ""
-        sharp = 0
-        try:
-            node = (st.get("SharpnessPoint_0") or {})
-            if "Int64" in node:
-                sharp = int(node.get("Int64") or 0)
-            else:
-                sharp = int(node.get("Int") or 0)
-        except Exception:
-            sharp = 0
-        is_build = self._is_build_struct(st)
-        return f"{'build' if is_build else 'weapon'}|{_norm_code(a)}|{_norm_code(b)}|{int(sharp)}"
-
-    def _weapon_display_for(self, a: str, b: str, sharp: int, is_build: bool) -> str:
-        # Friendly-ish display: use CSV name if present, else code
-        a_disp = self.names.get(a, _format_display(a))
-        b_disp = self.names.get(b, _format_display(b)) if b else ""
-        if is_build and b:
-            base = f"{a_disp} + {b_disp}"
-        else:
-            base = a_disp if a_disp else (a or b_disp)
-        if sharp:
-            return f"{base}  [Sharp {sharp}]"
-        return base
-
-    def _sanitize_weapon_entry_template(self, entry: Dict[str, Any]) -> Dict[str, Any]:
-        e = copy.deepcopy(entry)
-        st = (e.get("Struct") or {})
-        # normalize codes to canonical values (when possible)
-        a = (st.get("FirstCodeName_0") or {}).get("Name", "") or ""
-        b = (st.get("SecondCodeName_0") or {}).get("Name", "") or ""
-        a = self._canon_by_norm.get(_norm_code(a), a)
-        b = self._canon_by_norm.get(_norm_code(b), b) if b else ""
-        if isinstance(st.get("FirstCodeName_0"), dict):
-            st["FirstCodeName_0"]["Name"] = a
-        if b and isinstance(st.get("SecondCodeName_0"), dict):
-            st["SecondCodeName_0"]["Name"] = b
-
-        # reset unique id (allocated at add-time)
-        uid = st.get("UniqueId_0")
-        if isinstance(uid, dict):
-            if "Int64" in uid:
-                uid["Int64"] = 0
-            elif "Int" in uid:
-                uid["Int"] = 0
-            else:
-                uid["Int"] = 0
-
-        # ensure any equip slot enum is NONE
-        for v in st.values():
-            if isinstance(v, dict) and isinstance(v.get("Enum"), str) and v["Enum"].startswith("ELEquipSlotType::"):
-                v["Enum"] = "ELEquipSlotType::E_NONE"
-
-        # count (if present) to 1
-        c = st.get("Count_0")
-        if isinstance(c, dict):
-            if "Int64" in c:
-                c["Int64"] = 1
-            elif "Int" in c:
-                c["Int"] = 1
-            else:
-                c["Int"] = 1
-
-        e["Struct"] = st
-        return e
-
-    def _harvest_weapon_db_from_loaded_save(self) -> None:
-        """Harvest weapon entries from the currently loaded save into the persistent weapon db."""
-        if not self.data or not isinstance(self.inv_list, list):
-            return
-
-        weapons = self._weapon_db.setdefault("weapons", {})
-        changed = False
-
-        for e in self.inv_list:
-            if not isinstance(e, dict):
-                continue
-            st = (e.get("Struct") or {})
-            if not isinstance(st, dict):
-                continue
-
-            a = (st.get("FirstCodeName_0") or {}).get("Name", "") or ""
-            if not a:
-                continue
-            a_canon = self._canon_by_norm.get(_norm_code(a), a)
-            cat = self._category_for_ingame(a_canon)
-            is_build = self._is_build_struct(st)
-
-            # Only store things that belong in the Weapons view
-            if cat != "Weapons" and not is_build:
-                continue
-
-            b = (st.get("SecondCodeName_0") or {}).get("Name", "") or ""
-            b_canon = self._canon_by_norm.get(_norm_code(b), b) if b else ""
-
-            sharp = 0
-            try:
-                node = (st.get("SharpnessPoint_0") or {})
-                if "Int64" in node:
-                    sharp = int(node.get("Int64") or 0)
-                else:
-                    sharp = int(node.get("Int") or 0)
-            except Exception:
-                sharp = 0
-
-            sig = self._weapon_sig_for_entry(st)
-            if sig in weapons:
-                continue
-
-            disp = self._weapon_display_for(a_canon, b_canon, int(sharp), bool(is_build))
-            tmpl = self._sanitize_weapon_entry_template(e)
-
-            weapons[sig] = {
-                "display": disp,
-                "handle": a_canon,
-                "blade": b_canon,
-                "sharp": int(sharp),
-                "is_build": bool(is_build),
-                "entry": tmpl,
-            }
-            changed = True
-
-        if changed:
-            self._weapon_db_keys = set(map(str, weapons.keys()))
-            self._weapon_db_dirty = True
-            self._save_weapon_db_if_dirty()
-
-    # ---------- weapon database UI ----------
-    def _rebuild_weapon_db_table(self) -> None:
-        if not hasattr(self, "tbl_weapon_db"):
-            return
-        weapons = (self._weapon_db or {}).get("weapons", {})
-        if not isinstance(weapons, dict):
-            weapons = {}
-
-        self.tbl_weapon_db.setRowCount(0)
-        plus = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogYesButton)
-
-        # Stable ordering by display then handle/blade
-        def _sort_key(item):
-            sig, rec = item
-            if not isinstance(rec, dict):
-                return ("", "", "", sig)
-            return (
-                str(rec.get("display") or "").lower(),
-                str(rec.get("handle") or "").lower(),
-                str(rec.get("blade") or "").lower(),
-                sig,
-            )
-
-        for sig, rec in sorted(weapons.items(), key=_sort_key):
-            if not isinstance(rec, dict):
-                continue
-            r = self.tbl_weapon_db.rowCount()
-            self.tbl_weapon_db.insertRow(r)
-
-            name = QTableWidgetItem(str(rec.get("display") or sig))
-            name.setData(Qt.ItemDataRole.UserRole, sig)
-            name.setFlags(name.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.tbl_weapon_db.setItem(r, 0, name)
-
-            h = QTableWidgetItem(str(rec.get("handle") or ""))
-            h.setFlags(h.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.tbl_weapon_db.setItem(r, 1, h)
-
-            b = QTableWidgetItem(str(rec.get("blade") or ""))
-            b.setFlags(b.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.tbl_weapon_db.setItem(r, 2, b)
-
-            sh = QTableWidgetItem(str(rec.get("sharp") or 0))
-            sh.setFlags(sh.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            sh.setTextAlignment(int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter))
-            self.tbl_weapon_db.setItem(r, 3, sh)
-
-            add = QTableWidgetItem()
-            add.setData(Qt.ItemDataRole.DecorationRole, plus)
-            add.setData(Qt.ItemDataRole.UserRole, sig)
-            add.setFlags(Qt.ItemFlag.ItemIsEnabled)
-            self.tbl_weapon_db.setItem(r, 4, add)
-
-        self._filter_weapon_db()
-
-    def _filter_weapon_db(self) -> None:
-        needle = (self.weapon_db_filter.text() or "").strip().lower() if hasattr(self, "weapon_db_filter") else ""
-        for r in range(self.tbl_weapon_db.rowCount()):
-            namev = (self.tbl_weapon_db.item(r, 0) or QTableWidgetItem("")).text().lower()
-            hv = (self.tbl_weapon_db.item(r, 1) or QTableWidgetItem("")).text().lower()
-            bv = (self.tbl_weapon_db.item(r, 2) or QTableWidgetItem("")).text().lower()
-            show = True if not needle else (needle in namev or needle in hv or needle in bv)
-            self.tbl_weapon_db.setRowHidden(r, not show)
-
-    def _weapon_db_clicked(self, row: int, col: int) -> None:
-        if col != 4:
-            return
-        sig = self.tbl_weapon_db.item(row, col).data(Qt.ItemDataRole.UserRole) if self.tbl_weapon_db.item(row, col) else None
-        if not sig:
-            sig = self.tbl_weapon_db.item(row, 0).data(Qt.ItemDataRole.UserRole) if self.tbl_weapon_db.item(row, 0) else None
-        if not sig:
-            return
-        self._add_weapon_from_db(str(sig))
-
-    def _weapon_db_add_selected_clicked(self) -> None:
-        rows = sorted({idx.row() for idx in self.tbl_weapon_db.selectionModel().selectedRows()}) if self.tbl_weapon_db.selectionModel() else []
-        if not rows:
-            return
-        sig = self.tbl_weapon_db.item(rows[0], 0).data(Qt.ItemDataRole.UserRole) if self.tbl_weapon_db.item(rows[0], 0) else None
-        if sig:
-            self._add_weapon_from_db(str(sig))
-
-    def _weapon_db_remove_selected_clicked(self) -> None:
-        rows = sorted({idx.row() for idx in self.tbl_weapon_db.selectionModel().selectedRows()}) if self.tbl_weapon_db.selectionModel() else []
-        if not rows:
-            return
-        weapons = (self._weapon_db or {}).get("weapons", {})
-        if not isinstance(weapons, dict):
-            return
-        removed = 0
-        for r in reversed(rows):
-            sig = self.tbl_weapon_db.item(r, 0).data(Qt.ItemDataRole.UserRole) if self.tbl_weapon_db.item(r, 0) else None
-            if sig and str(sig) in weapons:
-                weapons.pop(str(sig), None)
-                removed += 1
-        if removed:
-            self._weapon_db_dirty = True
-            self._save_weapon_db_if_dirty()
-            self._rebuild_weapon_db_table()
-
-    def _alloc_next_unique_id(self) -> int:
-        mx = 0
-        try:
-            for e in (self.inv_list or []):
-                if not isinstance(e, dict):
-                    continue
-                st = e.get("Struct", {}) or {}
-                if not isinstance(st, dict):
-                    continue
-                node = (st.get("UniqueId_0") or {})
-                if isinstance(node, dict):
-                    if "Int64" in node:
-                        v = int(node.get("Int64") or 0)
-                    else:
-                        v = int(node.get("Int") or 0)
-                    if v > mx:
-                        mx = v
-        except Exception:
-            mx = 0
-        return int(mx) + 1
-
-    def _add_weapon_from_db(self, sig: str) -> None:
-        if not self.data:
-            return
-        weapons = (self._weapon_db or {}).get("weapons", {})
-        if not isinstance(weapons, dict) or sig not in weapons:
-            return
-        rec = weapons.get(sig) or {}
-        tmpl = (rec.get("entry") if isinstance(rec, dict) else None)
-        if not isinstance(tmpl, dict):
-            return
-
-        try:
-            items = self._ensure_items_array()
-        except Exception:
-            QMessageBox.warning(self, "Weapon Database", "Could not access inventory list.")
-            return
-
-        new_entry = copy.deepcopy(tmpl)
-        st = (new_entry.get("Struct") or {})
-        if not isinstance(st, dict):
-            st = {}
-            new_entry["Struct"] = st
-
-        # allocate a fresh UniqueId_0
-        uid_val = self._alloc_next_unique_id()
-        uid = st.get("UniqueId_0")
-        if not isinstance(uid, dict):
-            uid = {"tag": {"data": {"Other": "IntProperty"}}, "Int": 0}
-            st["UniqueId_0"] = uid
-        if "Int64" in uid:
-            uid["Int64"] = int(uid_val)
-        else:
-            uid["Int"] = int(uid_val)
-
-        # ensure unequipped
-        for v in st.values():
-            if isinstance(v, dict) and isinstance(v.get("Enum"), str) and v["Enum"].startswith("ELEquipSlotType::"):
-                v["Enum"] = "ELEquipSlotType::E_NONE"
-
-        # ensure count=1 if present
-        c = st.get("Count_0")
-        if isinstance(c, dict):
-            if "Int64" in c:
-                c["Int64"] = 1
-            else:
-                c["Int"] = 1
-
-        items.append(new_entry)
-
-        # mark dirty
-        try:
-            w = self.window()
-            if w is not None and hasattr(w, "_mark_dirty"):
-                w._mark_dirty(True)
-        except Exception:
-            pass
-
-        # refresh views and keep db updated
-        self._refresh_inv_list()
-        self._dedupe_inventory_in_place()
-        self._rebuild_all_views()
-
-
-
     def load_data(self, data: Dict[str, Any]) -> None:
         self.data = data
         self._refresh_inv_list()
         self._dedupe_inventory_in_place()
         self._harvest_seen_from_loaded_save()
-        self._harvest_weapon_db_from_loaded_save()
         self._rebuild_all_views()
 
     def _refresh_inv_list(self) -> None:
@@ -1159,7 +806,7 @@ class InventoryTab(QWidget):
         # keep permanent tabs; remove others
         for i in reversed(range(self.tabs.count())):
             w = self.tabs.widget(i)
-            if w not in (self.missing_page, self.tbl_equipped):
+            if w not in (self.missing_page, self.tbl_equipped, getattr(self, 'weapon_db_page', None)):
                 self.tabs.removeTab(i)
         self.entries_by_cat.clear()
         self.tables_by_cat.clear()
@@ -1173,20 +820,88 @@ class InventoryTab(QWidget):
         self._restore_focus_if_any()
         self._apply_global_search()
 
+
+
+    # ---------- Weapon/Part DB tab ----------
+    def _rebuild_weapon_db_table(self) -> None:
+        if not getattr(self, "tbl_weapon_db", None):
+            return
+        tbl = self.tbl_weapon_db
+        tbl.setRowCount(0)
+
+        db = getattr(self, "weapon_db", None)
+        if not db:
+            return
+
+        parts = []
+        try:
+            parts += [(p.code, p.name, p.tooltip, "Handle") for p in db.get_handles()]
+            parts += [(p.code, p.name, p.tooltip, "Blade") for p in db.get_blades()]
+        except Exception:
+            return
+
+        # stable sort (by display name, then code)
+        parts.sort(key=lambda t: ((t[1] or t[0]).casefold(), t[0].casefold()))
+
+        for code, name, tip, kind in parts:
+            r = tbl.rowCount()
+            tbl.insertRow(r)
+
+            disp = (name or "").strip() or self.names.get(code, _format_display(code))
+            it = QTableWidgetItem(disp)
+            it.setData(Qt.ItemDataRole.UserRole, code)
+            it.setToolTip((tip or "").strip() or self.tips.get(code, code))
+            it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            tbl.setItem(r, 0, it)
+
+            kt = QTableWidgetItem(kind)
+            kt.setFlags(kt.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            tbl.setItem(r, 1, kt)
+
+            btn = QPushButton("Add")
+            btn.clicked.connect(lambda _=False, c=code: self._add_weapon_db_code(c))
+            tbl.setCellWidget(r, 2, btn)
+
+        self._filter_weapon_db()
+
+    def _filter_weapon_db(self) -> None:
+        tbl = getattr(self, "tbl_weapon_db", None)
+        if not tbl:
+            return
+        needle = (getattr(self, "weapon_db_filter", None).text() if getattr(self, "weapon_db_filter", None) else "") or ""
+        needle = needle.strip().casefold()
+        for r in range(tbl.rowCount()):
+            name_item = tbl.item(r, 0)
+            kind_item = tbl.item(r, 1)
+            code = (name_item.data(Qt.ItemDataRole.UserRole) if name_item else "") or ""
+            hay = " ".join([
+                (name_item.text() if name_item else ""),
+                (kind_item.text() if kind_item else ""),
+                str(code),
+            ]).casefold()
+            tbl.setRowHidden(r, bool(needle) and (needle not in hay))
+
+    def _add_weapon_db_code(self, code: str) -> None:
+        if not code:
+            return
+        # remember where we were so selection stays sane after add
+        self._restore_tab_title = "Weapon/Part DB"
+        self._restore_missing_row = None
+        try:
+            self._add_item(code)
+        except Exception:
+            pass
+
     def _build_consolidated_categories(self) -> None:
         buckets = ["Weapons", "Consumables", "Materials", "Keys/Lore"]
         table_for: Dict[str, QTableWidget] = {}
         for b in buckets:
-            tbl = QTableWidget(0, 2)
+            tbl = QTableWidget(0, 1)
             tbl.setAlternatingRowColors(True)
-            tbl.setHorizontalHeaderLabels(["Name", "Count"])
+            tbl.setHorizontalHeaderLabels(["Name"])
             tbl.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-            tbl.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
             tbl.itemSelectionChanged.connect(lambda _b=b, t=tbl: self._category_selected(_b, t))
             self.tabs.addTab(tbl, b)
-            if b == "Weapons":
-                self.tabs.addTab(self.weapon_db_page, "Database")
-                self._rebuild_weapon_db_table()
             table_for[b] = tbl
             self.tables_by_cat[b] = tbl
             self.entries_by_cat[b] = []
@@ -1208,10 +923,6 @@ class InventoryTab(QWidget):
             it.setData(Qt.ItemDataRole.UserRole, r)
             it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
             tbl.setItem(r, 0, it)
-            cnt_it = QTableWidgetItem(str(_count_from_struct(st)))
-            cnt_it.setFlags(cnt_it.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            cnt_it.setTextAlignment(int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter))
-            tbl.setItem(r, 1, cnt_it)
 
     def _build_cosmetics_tab(self) -> None:
         cos_entries = []
@@ -1297,11 +1008,10 @@ class InventoryTab(QWidget):
             parent.setText(1, f"{owned}/{total}")
 
     def _build_raw_all_tab(self) -> None:
-        tbl = QTableWidget(0, 2)
+        tbl = QTableWidget(0, 1)
         tbl.setAlternatingRowColors(True)
-        tbl.setHorizontalHeaderLabels(["Name", "Count"])
+        tbl.setHorizontalHeaderLabels(["Name"])
         tbl.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        tbl.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         tbl.itemSelectionChanged.connect(lambda t=tbl: self._category_selected("All (raw)", t))
         self.tabs.addTab(tbl, "All (raw)")
         self.tables_by_cat["All (raw)"] = tbl
@@ -1320,10 +1030,6 @@ class InventoryTab(QWidget):
             it.setData(Qt.ItemDataRole.UserRole, r)
             it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
             tbl.setItem(r, 0, it)
-            cnt_it = QTableWidgetItem(str(_count_from_struct(st)))
-            cnt_it.setFlags(cnt_it.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            cnt_it.setTextAlignment(int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter))
-            tbl.setItem(r, 1, cnt_it)
 
     def _rebuild_equipped(self) -> None:
         self.tbl_equipped.setRowCount(0)
@@ -1416,36 +1122,7 @@ class InventoryTab(QWidget):
         if r < 0 or r >= len(self.entries_by_cat.get(cat, [])):
             return
         entry = self.entries_by_cat[cat][r]
-        self._last_selected = (cat, r, tbl)
         self._show_details(entry)
-
-    
-    def _refresh_selected_table_count(self) -> None:
-        """If the current tab is a table that includes a Count column, refresh it after Count_0 edits."""
-        try:
-            ctx = getattr(self, "_last_selected", None)
-            if not ctx:
-                return
-            cat, row, tbl = ctx
-            if not isinstance(tbl, QTableWidget):
-                return
-            if tbl.columnCount() < 2:
-                return
-            if row < 0 or row >= len(self.entries_by_cat.get(cat, [])):
-                return
-            entry = self.entries_by_cat[cat][row]
-            st = entry.get("Struct", {})
-            cnt = _count_from_struct(st)
-            it = tbl.item(row, 1)
-            if it is None:
-                it = QTableWidgetItem(str(cnt))
-                it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
-                it.setTextAlignment(int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter))
-                tbl.setItem(row, 1, it)
-            else:
-                it.setText(str(cnt))
-        except Exception:
-            pass
 
     def _equipped_selected(self) -> None:
         rows = self.tbl_equipped.selectionModel().selectedRows()
@@ -1490,8 +1167,8 @@ class InventoryTab(QWidget):
             if kind in ("int", "int64"):
                 maxv = 2_147_483_647 if kind == "int" else 9_223_372_036_854_775_807
                 le = QLineEdit(str(val))
-                le.setValidator(QIntValidator(INT32_MIN, INT32_MAX, self))
-                le.editingFinished.connect(lambda a=key, e=le, k=kind: self._write_scalar(st, a, k, e.text()))
+                le.setValidator(QIntValidator(0, INT32_MAX, self))
+                le.editingFinished.connect(lambda a=key, e=le: self._write_scalar(st, a, "int64" if kind == "int64" else "int", e.text()))
                 self.form.addRow(label, le)
             elif kind == "bool":
                 cb = QCheckBox(); cb.setChecked(bool(val))
@@ -1534,29 +1211,11 @@ class InventoryTab(QWidget):
             node["Str"] = str(value)
             node["tag"] = {"data": {"Other": "StrProperty"}}
 
-        # Ensure the main window knows there are unsaved edits
-        try:
-            w = self.window()
-            if w is not None and hasattr(w, "_mark_dirty"):
-                w._mark_dirty(True)
-        except Exception:
-            pass
-
-        # If the item identity changes (code name), the item may move categories.
-        # Rebuild views so tabs/missing/equipped reflect the new state.
-        if key in ("FirstCodeName_0", "SecondCodeName_0"):
-            try:
-                self._refresh_inv_list()
-                self._rebuild_all_views()
-            except Exception:
-                pass
-
         if key.lower().startswith("elequipslottype") or (kind == "enum" and isinstance(value, str) and value.startswith("ELEquipSlotType::")):
             self._rebuild_equipped()
             self._refresh_selected_cosmetic_row()
 
         if key == "Count_0":
-            self._refresh_selected_table_count()
             self._refresh_selected_cosmetic_row()
 
     # ---------- add item(s) ----------

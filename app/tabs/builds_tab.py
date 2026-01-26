@@ -13,7 +13,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView,
-    QGroupBox, QFormLayout, QLineEdit, QComboBox, QPushButton, QCheckBox, QMessageBox
+    QGroupBox, QFormLayout, QLineEdit, QComboBox, QPushButton, QCheckBox, QMessageBox, QTabWidget
 )
 
 JSON = Dict[str, Any]
@@ -139,6 +139,12 @@ class BuildsTab(QWidget):
         self._parts_db_dirty: bool = False
         self._seen_handles: set[str] = set()
         self._seen_blades: set[str] = set()
+        
+        # Persistent assembled-weapon database (handle+blade combos across saves)
+        self._weapon_build_db_path: Path = _default_db_path("weapon_build_db.json")
+        self._weapon_build_db: Dict[str, Any] = _load_json(self._weapon_build_db_path) or {"version": 1, "builds": {}}
+        if not isinstance(self._weapon_build_db, dict) or "builds" not in self._weapon_build_db:
+            self._weapon_build_db = {"version": 1, "builds": {}}
 
         self._all_handles: List[str] = []
         self._all_blades: List[str] = []
@@ -177,7 +183,57 @@ class BuildsTab(QWidget):
         hdr.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         self.tbl.itemSelectionChanged.connect(self._on_table_selection)
         self.tbl.cellClicked.connect(lambda *_: self._on_table_selection())  # clicking Display triggers editor
-        root.addWidget(self.tbl)
+        # Weapons sub-tabs: In Save + Database
+        self.weapons_tabs = QTabWidget(self)
+
+        # In Save tab (existing table)
+        in_save = QWidget(self.weapons_tabs)
+        in_save_l = QVBoxLayout(in_save)
+        in_save_l.setContentsMargins(0, 0, 0, 0)
+        in_save_l.addWidget(self.tbl)
+        self.weapons_tabs.addTab(in_save, "In Save")
+
+        # Database tab (persistent assembled weapons)
+        dbw = QWidget(self.weapons_tabs)
+        db_l = QVBoxLayout(dbw)
+        db_l.setContentsMargins(8, 8, 8, 8)
+
+        db_top = QHBoxLayout()
+        self.weapon_db_filter = QLineEdit()
+        self.weapon_db_filter.setPlaceholderText("Filter weapon database…")
+        self.weapon_db_filter.textChanged.connect(lambda _=None: self._rebuild_weapon_db_table())
+        db_top.addWidget(self.weapon_db_filter, 2)
+
+        self.btn_weapon_db_capture = QPushButton("Capture Selected From Save")
+        self.btn_weapon_db_capture.clicked.connect(self._weapon_db_capture_selected_from_save)
+        db_top.addWidget(self.btn_weapon_db_capture, 0)
+
+        self.btn_weapon_db_add = QPushButton("Add Selected → Save")
+        self.btn_weapon_db_add.clicked.connect(self._weapon_db_add_selected_to_save)
+        db_top.addWidget(self.btn_weapon_db_add, 0)
+
+        self.btn_weapon_db_remove = QPushButton("Remove From DB")
+        self.btn_weapon_db_remove.clicked.connect(self._weapon_db_remove_selected)
+        db_top.addWidget(self.btn_weapon_db_remove, 0)
+
+        db_l.addLayout(db_top)
+
+        self.tbl_weapon_db = QTableWidget(0, 3, dbw)
+        self.tbl_weapon_db.setAlternatingRowColors(True)
+        self.tbl_weapon_db.setHorizontalHeaderLabels(["Display", "Handle", "Blade"])
+        h = self.tbl_weapon_db.horizontalHeader()
+        h.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        h.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        h.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.tbl_weapon_db.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.tbl_weapon_db.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        self.tbl_weapon_db.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.tbl_weapon_db.itemSelectionChanged.connect(self._weapon_db_selection_changed)
+        db_l.addWidget(self.tbl_weapon_db, 1)
+
+        self.weapons_tabs.addTab(dbw, "Database")
+
+        root.addWidget(self.weapons_tabs)
 
         # Editor
         gb = QGroupBox("Build Editor")
@@ -217,6 +273,161 @@ class BuildsTab(QWidget):
         self.btn_delete.clicked.connect(self._delete_build)
         self.btn_apply.clicked.connect(self._apply_build)
 
+
+    # ---------- weapon database ----------
+    def _weapon_sig(self, handle: str, blade: str) -> str:
+        return f"{(handle or '').strip()}|{(blade or '').strip()}"
+
+    def _harvest_weapon_db_from_loaded_save(self) -> None:
+        """Record all assembled weapons seen in the loaded save into persistent db (deduped)."""
+        db = self._weapon_build_db.setdefault("builds", {})
+        changed = False
+        if not isinstance(db, dict):
+            self._weapon_build_db["builds"] = {}
+            db = self._weapon_build_db["builds"]
+
+        for e in self.build_rows:
+            st = e.get("Struct", {}) if isinstance(e.get("Struct"), dict) else {}
+            h = _read_name(st, "FirstCodeName_0")
+            b = _read_name(st, "SecondCodeName_0")
+            if not h or not b:
+                continue
+            sig = self._weapon_sig(h, b)
+            if sig in db:
+                continue
+            disp = f"{_fmt(h)} / {_fmt(b)}"
+            db[sig] = {"display": disp, "handle": h, "blade": b}
+            changed = True
+
+        if changed:
+            _atomic_write_json(self._weapon_build_db_path, self._weapon_build_db)
+
+    def _rebuild_weapon_db_table(self) -> None:
+        if not hasattr(self, "tbl_weapon_db"):
+            return
+        builds = (self._weapon_build_db or {}).get("builds", {})
+        rows: List[tuple[str, str, str, str]] = []
+        if isinstance(builds, dict):
+            for sig, rec in builds.items():
+                if not isinstance(rec, dict):
+                    continue
+                disp = str(rec.get("display") or "")
+                h = str(rec.get("handle") or "")
+                b = str(rec.get("blade") or "")
+                rows.append((str(sig), disp, h, b))
+
+        needle = (self.weapon_db_filter.text() if hasattr(self, "weapon_db_filter") else "") or ""
+        needle = needle.strip().lower()
+        if needle:
+            rows = [r for r in rows if (needle in r[1].lower() or needle in r[2].lower() or needle in r[3].lower())]
+
+        rows.sort(key=lambda t: (t[1] or t[2] or "").casefold())
+
+        self.tbl_weapon_db.setRowCount(len(rows))
+        for r, (sig, disp, h, b) in enumerate(rows):
+            it_disp = QTableWidgetItem(disp)
+            it_handle = QTableWidgetItem(h)
+            it_blade = QTableWidgetItem(b)
+            it_disp.setData(Qt.ItemDataRole.UserRole, sig)
+            self.tbl_weapon_db.setItem(r, 0, it_disp)
+            self.tbl_weapon_db.setItem(r, 1, it_handle)
+            self.tbl_weapon_db.setItem(r, 2, it_blade)
+
+    def _weapon_db_selected_sig(self) -> Optional[str]:
+        if not hasattr(self, "tbl_weapon_db"):
+            return None
+        rows = self.tbl_weapon_db.selectionModel().selectedRows()
+        if not rows:
+            return None
+        it = self.tbl_weapon_db.item(rows[0].row(), 0)
+        if not it:
+            return None
+        sig = it.data(Qt.ItemDataRole.UserRole)
+        return str(sig) if sig is not None else None
+
+    def _weapon_db_selection_changed(self) -> None:
+        sig = self._weapon_db_selected_sig()
+        if not sig:
+            return
+        rec = (self._weapon_build_db or {}).get("builds", {}).get(sig, {})
+        if not isinstance(rec, dict):
+            return
+        h = str(rec.get("handle") or "")
+        b = str(rec.get("blade") or "")
+        if h:
+            self.cb_handle.setCurrentText(h)
+        if b:
+            self.cb_blade.setCurrentText(b)
+        self.cb_slot.setCurrentText("ELEquipSlotType::E_NONE")
+        self.ed_display.setText(f"{_fmt(h)} / {_fmt(b)}")
+
+    def _weapon_db_capture_selected_from_save(self) -> None:
+        rows = self.tbl.selectionModel().selectedRows()
+        if not rows:
+            return
+        entry = self.row_to_entry.get(rows[0].row())
+        if not isinstance(entry, dict):
+            return
+        st = entry.get("Struct", {}) if isinstance(entry.get("Struct"), dict) else {}
+        h = _read_name(st, "FirstCodeName_0")
+        b = _read_name(st, "SecondCodeName_0")
+        if not h or not b:
+            return
+        sig = self._weapon_sig(h, b)
+        db = self._weapon_build_db.setdefault("builds", {})
+        if not isinstance(db, dict):
+            self._weapon_build_db["builds"] = {}
+            db = self._weapon_build_db["builds"]
+        if sig in db:
+            return
+        db[sig] = {"display": f"{_fmt(h)} / {_fmt(b)}", "handle": h, "blade": b}
+        _atomic_write_json(self._weapon_build_db_path, self._weapon_build_db)
+        self._rebuild_weapon_db_table()
+
+    def _weapon_db_add_selected_to_save(self) -> None:
+        sig = self._weapon_db_selected_sig()
+        if not sig or not self.data:
+            return
+        rec = (self._weapon_build_db or {}).get("builds", {}).get(sig, {})
+        if not isinstance(rec, dict):
+            return
+        h = str(rec.get("handle") or "")
+        b = str(rec.get("blade") or "")
+        if not h or not b:
+            return
+
+        arr = _items_array(self.data)
+        e = {"Struct": {}}
+        st = e["Struct"]
+        _ensure_name(st, "FirstCodeName_0", h)
+        _ensure_name(st, "SecondCodeName_0", b)
+        _ensure_enum(st, "EquipItemSlotType_0", "ELEquipSlotType", "ELEquipSlotType::E_NONE")
+        _ensure_int(st, "SharpnessPoint_0", 0)
+        if self.cb_autoid.isChecked():
+            _ensure_int64(st, "UniqueId_0", self._generate_unique_id())
+        arr.append(e)
+
+        self._reindex_builds()
+        self._collect_lookups()
+        self._rebuild_table()
+        try:
+            self.weapons_tabs.setCurrentIndex(0)
+        except Exception:
+            pass
+        r = self.tbl.rowCount() - 1
+        if r >= 0:
+            self.tbl.selectRow(r)
+
+    def _weapon_db_remove_selected(self) -> None:
+        sig = self._weapon_db_selected_sig()
+        if not sig:
+            return
+        db = (self._weapon_build_db or {}).get("builds", {})
+        if isinstance(db, dict) and sig in db:
+            db.pop(sig, None)
+            _atomic_write_json(self._weapon_build_db_path, self._weapon_build_db)
+            self._rebuild_weapon_db_table()
+
     # ---------- plumbing ----------
     def load_data(self, data: JSON) -> None:
         self.data = data
@@ -233,6 +444,11 @@ class BuildsTab(QWidget):
 
         self._collect_lookups()
         self._rebuild_table()
+        try:
+            self._harvest_weapon_db_from_loaded_save()
+            self._rebuild_weapon_db_table()
+        except Exception:
+            pass
 
 
     def _load_parts_db(self) -> None:
