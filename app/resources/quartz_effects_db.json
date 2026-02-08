@@ -1,0 +1,268 @@
+{
+  "effects": {
+    "CL1_BLUE_1": {
+      "name": "CL1_BLUE_1"
+    },
+    "CL1_BLUE_2": {
+      "name": "CL1_BLUE_2"
+    },
+    "CL1_BLUE_3": {
+      "name": "CL1_BLUE_3"
+    },
+    "CL1_BLUE_4": {
+      "name": "CL1_BLUE_4"
+    },
+    "CL1_GREEN_1": {
+      "name": "CL1_GREEN_1"
+    },
+    "CL1_GREEN_3": {
+      "name": "CL1_GREEN_3"
+    },
+    "CL1_GREEN_4": {
+      "name": "CL1_GREEN_4"
+    },
+    "CL1_RED_1": {
+      "name": "CL1_RED_1"
+    },
+    "CL1_RED_2": {
+      "name": "CL1_RED_2"
+    },
+    "CL1_RED_3": {
+      "name": "CL1_RED_3"
+    },
+    "CL1_RED_4": {
+      "name": "CL1_RED_4"
+    },
+    "CL1_YELLOW_1": {
+      "name": "CL1_YELLOW_1"
+    },
+    "CL1_YELLOW_3": {
+      "name": "CL1_YELLOW_3"
+    },
+    "CL1_YELLOW_4": {
+      "name": "CL1_YELLOW_4"
+    },
+    "CL2_BLUE_5": {
+      "name": "CL2_BLUE_5"
+    },
+    "CL2_BLUE_6": {
+      "name": "CL2_BLUE_6"
+    },
+    "CL2_BLUE_7": {
+      "name": "CL2_BLUE_7"
+    },
+    "CL2_BLUE_8": {
+      "name": "CL2_BLUE_8"
+    },
+    "CL2_RED_5": {
+      "name": "CL2_RED_5"
+    },
+    "CL2_RED_6": {
+      "name": "CL2_RED_6"
+    },
+    "CL2_RED_7": {
+      "name": "CL2_RED_7"
+    },
+    "CL2_RED_8": {
+      "name": "CL2_RED_8"
+    },
+    "CL2_YELLOW_5": {
+      "name": "CL2_YELLOW_5"
+    },
+    "CL2_YELLOW_6": {
+      "name": "CL2_YELLOW_6"
+    },
+    "CL2_YELLOW_8": {
+      "name": "CL2_YELLOW_8"
+    },
+    "CL3_BLUE_10": {
+      "name": "CL3_BLUE_10"
+    },
+    "CL3_BLUE_11": {
+      "name": "CL3_BLUE_11"
+    },
+    "CL3_BLUE_12": {
+      "name": "CL3_BLUE_12"
+    },
+    "CL3_BLUE_9": {
+      "name": "CL3_BLUE_9"
+    },
+    "CL3_GREEN_10": {
+      "name": "CL3_GREEN_10"
+    },
+    "CL3_GREEN_11": {
+      "name": "CL3_GREEN_11"
+    },
+    "CL3_GREEN_12": {
+      "name": "CL3_GREEN_12"
+    },
+    "CL3_RED_10": {
+      "name": "CL3_RED_10"
+    },
+    "CL3_RED_11": {
+      "name": "CL3_RED_11"
+    },
+    "CL3_RED_12": {
+      "name": "CL3_RED_12"
+    },
+    "CL3_RED_9": {
+      "name": "CL3_RED_9"
+    },
+    "CL3_YELLOW_10": {
+      "name": "CL3_YELLOW_10"
+    },
+    "CL4_BLUE_13": {
+      "name": "CL4_BLUE_13"
+    },
+    "CL4_BLUE_14": {
+      "name": "CL4_BLUE_14"
+    },
+    "CL4_BLUE_15": {
+      "name": "CL4_BLUE_15"
+    },
+    "CL4_BLUE_16": {
+      "name": "CL4_BLUE_16"
+    },
+    "CL4_GREEN_13": {
+      "name": "CL4_GREEN_13"
+    },
+    "CL4_GREEN_14": {
+      "name": "CL4_GREEN_14"
+    },
+    "CL4_GREEN_16": {
+      "name": "CL4_GREEN_16"
+    },
+    "CL4_RED_13": {
+      "name": "CL4_RED_13"
+    },
+    "CL4_RED_15": {
+      "name": "CL4_RED_15"
+    },
+    "CL4_RED_16": {
+      "name": "CL4_RED_16"
+    },
+    "CL4_YELLOW_14": {
+      "name": "CL4_YELLOW_14"
+    },
+    "CL4_YELLOW_15": {
+      "name": "CL4_YELLOW_15"
+    },
+    "CL4_YELLOW_16": {
+      "name": "CL4_YELLOW_16"
+    },
+    "CL5_BLUE_17": {
+      "name": "CL5_BLUE_17"
+    },
+    "CL5_BLUE_18": {
+      "name": "CL5_BLUE_18"
+    },
+    "CL5_BLUE_19": {
+      "name": "CL5_BLUE_19"
+    },
+    "CL5_BLUE_20": {
+      "name": "CL5_BLUE_20"
+    },
+    "CL5_GREEN_17": {
+      "name": "CL5_GREEN_17"
+    },
+    "CL5_GREEN_19": {
+      "name": "CL5_GREEN_19"
+    },
+    "CL5_GREEN_20": {
+      "name": "CL5_GREEN_20"
+    },
+    "CL5_RED_17": {
+      "name": "CL5_RED_17"
+    },
+    "CL5_RED_18": {
+      "name": "CL5_RED_18"
+    },
+    "CL5_RED_19": {
+      "name": "CL5_RED_19"
+    },
+    "CL5_RED_20": {
+      "name": "CL5_RED_20"
+    },
+    "CL5_YELLOW_18": {
+      "name": "CL5_YELLOW_18"
+    },
+    "CL5_YELLOW_20": {
+      "name": "CL5_YELLOW_20"
+    },
+    "CL6_BLUE_21": {
+      "name": "CL6_BLUE_21"
+    },
+    "CL6_BLUE_22": {
+      "name": "CL6_BLUE_22"
+    },
+    "CL6_BLUE_23": {
+      "name": "CL6_BLUE_23"
+    },
+    "CL6_BLUE_24": {
+      "name": "CL6_BLUE_24"
+    },
+    "CL6_GREEN_23": {
+      "name": "CL6_GREEN_23"
+    },
+    "CL6_GREEN_24": {
+      "name": "CL6_GREEN_24"
+    },
+    "CL6_RED_21": {
+      "name": "CL6_RED_21"
+    },
+    "CL6_RED_22": {
+      "name": "CL6_RED_22"
+    },
+    "CL6_RED_23": {
+      "name": "CL6_RED_23"
+    },
+    "CL6_RED_24": {
+      "name": "CL6_RED_24"
+    },
+    "CL6_YELLOW_21": {
+      "name": "CL6_YELLOW_21"
+    },
+    "CL6_YELLOW_22": {
+      "name": "CL6_YELLOW_22"
+    },
+    "CL6_YELLOW_23": {
+      "name": "CL6_YELLOW_23"
+    },
+    "CL7_BLUE_26": {
+      "name": "CL7_BLUE_26"
+    },
+    "CL7_BLUE_27": {
+      "name": "CL7_BLUE_27"
+    },
+    "CL7_BLUE_28": {
+      "name": "CL7_BLUE_28"
+    },
+    "CL7_GREEN_25": {
+      "name": "CL7_GREEN_25"
+    },
+    "CL7_GREEN_26": {
+      "name": "CL7_GREEN_26"
+    },
+    "CL7_GREEN_27": {
+      "name": "CL7_GREEN_27"
+    },
+    "CL7_GREEN_28": {
+      "name": "CL7_GREEN_28"
+    },
+    "CL7_RED_25": {
+      "name": "CL7_RED_25"
+    },
+    "CL7_RED_26": {
+      "name": "CL7_RED_26"
+    },
+    "CL7_RED_28": {
+      "name": "CL7_RED_28"
+    },
+    "CL7_YELLOW_26": {
+      "name": "CL7_YELLOW_26"
+    },
+    "CL7_YELLOW_27": {
+      "name": "CL7_YELLOW_27"
+    }
+  }
+}

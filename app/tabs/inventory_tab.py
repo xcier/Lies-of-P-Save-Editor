@@ -13,9 +13,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
     QWidget, QSplitter, QHBoxLayout, QVBoxLayout, QTabWidget,
-    QTableWidget, QTableWidgetItem, QHeaderView, QGroupBox, QFormLayout,
+    QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView, QGroupBox, QFormLayout,
     QLabel, QLineEdit, QCheckBox, QMessageBox, QToolButton, QStyle,
-    QPushButton, QFileDialog, QTreeWidget, QTreeWidgetItem, QComboBox
+    QPushButton, QFileDialog, QTreeWidget, QTreeWidgetItem, QComboBox, QMenu, QInputDialog
 )
 
 from app.core.weapon_parts_db import WeaponPartsDB
@@ -123,8 +123,28 @@ class InventoryTab(QWidget):
         topbar.addWidget(self.btn_export, 0)
         topbar.addWidget(self.btn_import, 0)
         left_v.addLayout(topbar)
+        # Bulk actions toolbar (visible alternative to right-click menu)
+        bulkbar = QHBoxLayout()
+        self.lbl_bulk_ctx = QLabel("Bulk: " )
+        self.btn_bulk_set = QPushButton("Set Qty…")
+        self.btn_bulk_del = QPushButton("Delete")
+        self.btn_bulk_exp = QPushButton("Export Selected…")
+        self.btn_bulk_imp = QPushButton("Import (add)…")
+        bulkbar.addWidget(self.lbl_bulk_ctx, 0)
+        bulkbar.addWidget(self.btn_bulk_set, 0)
+        bulkbar.addWidget(self.btn_bulk_del, 0)
+        bulkbar.addWidget(self.btn_bulk_exp, 0)
+        bulkbar.addWidget(self.btn_bulk_imp, 0)
+        bulkbar.addStretch(1)
+        left_v.addLayout(bulkbar)
+
+        self.btn_bulk_set.clicked.connect(self._bulk_toolbar_set_qty)
+        self.btn_bulk_del.clicked.connect(self._bulk_toolbar_delete)
+        self.btn_bulk_exp.clicked.connect(self._bulk_toolbar_export)
+        self.btn_bulk_imp.clicked.connect(self._bulk_toolbar_import)
 
         self.tabs = QTabWidget()
+        self.tabs.currentChanged.connect(lambda _=None: self._update_bulk_toolbar_state())
         left_v.addWidget(self.tabs)
         splitter.addWidget(left_container)
 
@@ -143,16 +163,49 @@ class InventoryTab(QWidget):
 
         self.tbl_missing = QTableWidget(0, 2)
         self.tbl_missing.setAlternatingRowColors(True)
+        self.tbl_missing.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.tbl_missing.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.tbl_missing.setHorizontalHeaderLabels(["Name", "Add"])
         mhdr = self.tbl_missing.horizontalHeader()
         mhdr.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         mhdr.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.tbl_missing.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.tbl_missing.customContextMenuRequested.connect(self._show_missing_menu)
+        try:
+            self.tbl_missing.itemSelectionChanged.connect(lambda _=None: self._update_bulk_toolbar_state())
+        except Exception:
+            pass
         self.tbl_missing.cellClicked.connect(self._missing_clicked)
         mv.addWidget(self.tbl_missing)
 
         self.tabs.addTab(self.missing_page, "Missing")
 
-        # Equipped tab (read-only list)
+        # Equipped tab (equip manager)
+        self.equipped_page = QWidget()
+        ev = QVBoxLayout(self.equipped_page)
+
+        ehbar = QHBoxLayout()
+        ehbar.addWidget(QLabel("Slot:"), 0)
+
+        self.cb_equip_slot = QComboBox()
+        self.cb_equip_slot.setEditable(True)
+        try:
+            self.cb_equip_slot.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        except Exception:
+            pass
+        self.cb_equip_slot.setCurrentText("ELEquipSlotType::E_NONE")
+        ehbar.addWidget(self.cb_equip_slot, 1)
+
+        self.btn_set_slot = QPushButton("Set Slot")
+        self.btn_set_slot.clicked.connect(self._equipped_set_slot)
+        ehbar.addWidget(self.btn_set_slot, 0)
+
+        self.btn_unequip = QPushButton("Unequip")
+        self.btn_unequip.clicked.connect(lambda _=False: self._equipped_set_slot(value="ELEquipSlotType::E_NONE"))
+        ehbar.addWidget(self.btn_unequip, 0)
+
+        ev.addLayout(ehbar)
+
         self.tbl_equipped = QTableWidget(0, 2)
         self.tbl_equipped.setAlternatingRowColors(True)
         self.tbl_equipped.setHorizontalHeaderLabels(["Name", "Slot"])
@@ -160,7 +213,10 @@ class InventoryTab(QWidget):
         eh.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         eh.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         self.tbl_equipped.itemSelectionChanged.connect(self._equipped_selected)
-        self.tabs.addTab(self.tbl_equipped, "Equipped")
+        ev.addWidget(self.tbl_equipped)
+
+        self.tabs.addTab(self.equipped_page, "Equipped")
+
 
         # ----- Weapon/Part DB tab (buildable parts database) -----
         self.weapon_db = None
@@ -806,7 +862,7 @@ class InventoryTab(QWidget):
         # keep permanent tabs; remove others
         for i in reversed(range(self.tabs.count())):
             w = self.tabs.widget(i)
-            if w not in (self.missing_page, self.tbl_equipped, getattr(self, 'weapon_db_page', None)):
+            if w not in (self.missing_page, self.equipped_page, getattr(self, 'weapon_db_page', None)):
                 self.tabs.removeTab(i)
         self.entries_by_cat.clear()
         self.tables_by_cat.clear()
@@ -885,12 +941,12 @@ class InventoryTab(QWidget):
         if not code:
             return
         # remember where we were so selection stays sane after add
-        self._restore_tab_title = "Weapon/Part DB"
+        self._restore_tab_title = 'Weapon/Part DB'
         self._restore_missing_row = None
         try:
             self._add_item(code)
-        except Exception:
-            pass
+        except Exception as e:
+            QMessageBox.warning(self, 'Add Item', f"Failed to add item:\n{e}")
 
     def _build_consolidated_categories(self) -> None:
         buckets = ["Weapons", "Consumables", "Materials", "Keys/Lore"]
@@ -898,9 +954,17 @@ class InventoryTab(QWidget):
         for b in buckets:
             tbl = QTableWidget(0, 1)
             tbl.setAlternatingRowColors(True)
+            tbl.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+            tbl.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
             tbl.setHorizontalHeaderLabels(["Name"])
             tbl.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
             tbl.itemSelectionChanged.connect(lambda _b=b, t=tbl: self._category_selected(_b, t))
+            tbl.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+            tbl.customContextMenuRequested.connect(lambda pos, _b=b, t=tbl: self._show_bulk_menu(_b, t, pos))
+        try:
+            tbl.itemSelectionChanged.connect(lambda _=None: self._update_bulk_toolbar_state())
+        except Exception:
+            pass
             self.tabs.addTab(tbl, b)
             table_for[b] = tbl
             self.tables_by_cat[b] = tbl
@@ -1013,6 +1077,12 @@ class InventoryTab(QWidget):
         tbl.setHorizontalHeaderLabels(["Name"])
         tbl.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         tbl.itemSelectionChanged.connect(lambda t=tbl: self._category_selected("All (raw)", t))
+        tbl.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        tbl.customContextMenuRequested.connect(lambda pos, t=tbl: self._show_bulk_menu("All (raw)", t, pos))
+        try:
+            tbl.itemSelectionChanged.connect(lambda _=None: self._update_bulk_toolbar_state())
+        except Exception:
+            pass
         self.tabs.addTab(tbl, "All (raw)")
         self.tables_by_cat["All (raw)"] = tbl
         self.entries_by_cat["All (raw)"] = []
@@ -1054,6 +1124,8 @@ class InventoryTab(QWidget):
             self.tbl_equipped.setItem(row, 1, s)
             self.row_entry_map_equipped[row] = entry
             row += 1
+
+        self._refresh_equip_slot_choices()
 
     def _rebuild_missing(self) -> None:
         # Build set of what we already have (canonicalized)
@@ -1133,7 +1205,8 @@ class InventoryTab(QWidget):
             self._show_details(entry)
 
     def _missing_clicked(self, row: int, col: int) -> None:
-        if col not in (0, 1):
+        # Only add when clicking the "Add" column (keeps normal row selection usable)
+        if col != 1:
             return
         code = self.tbl_missing.item(row, 0).data(Qt.ItemDataRole.UserRole)
         if not code:
@@ -1141,6 +1214,311 @@ class InventoryTab(QWidget):
         self._restore_tab_title = "Missing"
         self._restore_missing_row = row
         self._add_item(code)
+
+
+    def _show_missing_menu(self, pos) -> None:
+        codes: List[str] = []
+        for idx in self.tbl_missing.selectionModel().selectedRows():
+            code = self.tbl_missing.item(idx.row(), 0).data(Qt.ItemDataRole.UserRole)
+            if code:
+                codes.append(code)
+
+        m = QMenu(self.tbl_missing)
+        act_add_sel = m.addAction(f"Add selected ({len(codes)})")
+        act_add_vis = m.addAction("Add all visible")
+        act_add_sel.setEnabled(bool(codes))
+
+        chosen = m.exec(self.tbl_missing.viewport().mapToGlobal(pos))
+        if chosen is act_add_sel:
+            # Add each selected code (duplicates are handled by _add_item)
+            for code in codes:
+                self._add_item(code)
+        elif chosen is act_add_vis:
+            self._add_all_missing_visible()
+
+    # ---------- bulk actions (tables) ----------
+    def _selected_entries_from_table(self, cat: str, tbl: QTableWidget) -> List[Dict[str, Any]]:
+        rows = sorted({i.row() for i in tbl.selectedIndexes()})
+        out: List[Dict[str, Any]] = []
+        bucket = self.entries_by_cat.get(cat, [])
+        for r in rows:
+            if 0 <= r < len(bucket):
+                out.append(bucket[r])
+        return out
+
+    # ---------- bulk toolbar helpers ----------
+    def _bulk_current_table(self):
+        try:
+            w = self.tabs.currentWidget()
+        except Exception:
+            return None, None
+        from PyQt6.QtWidgets import QTableWidget
+        if isinstance(w, QTableWidget):
+            try:
+                cat = self.tabs.tabText(self.tabs.currentIndex())
+            except Exception:
+                cat = ""
+            return cat, w
+        return None, None
+
+    def _update_bulk_toolbar_state(self) -> None:
+        # Visible bulk toolbar should always reflect the active tab + selection.
+        if not getattr(self, "lbl_bulk_ctx", None):
+            return
+
+        cat, tbl = self._bulk_current_table()
+        if not tbl:
+            self.lbl_bulk_ctx.setText("Bulk: ")
+            for b in (self.btn_bulk_set, self.btn_bulk_del, self.btn_bulk_exp, self.btn_bulk_imp):
+                try:
+                    b.setEnabled(False)
+                except Exception:
+                    pass
+            return
+
+        self.lbl_bulk_ctx.setText(f"Bulk: {cat}")
+
+        # Missing tab uses a different context menu (Add Selected/Add Visible)
+        if cat == "Missing":
+            try:
+                self.btn_bulk_set.setEnabled(False)
+                self.btn_bulk_del.setEnabled(False)
+                self.btn_bulk_exp.setEnabled(False)
+                self.btn_bulk_imp.setEnabled(False)
+            except Exception:
+                pass
+            return
+
+        try:
+            entries = self._selected_entries_from_table(cat, tbl)
+        except Exception:
+            entries = []
+
+        has_sel = bool(entries)
+        try: self.btn_bulk_set.setEnabled(has_sel)
+        except Exception: pass
+        try: self.btn_bulk_del.setEnabled(has_sel)
+        except Exception: pass
+        try: self.btn_bulk_exp.setEnabled(has_sel)
+        except Exception: pass
+        try: self.btn_bulk_imp.setEnabled(True)
+        except Exception: pass
+
+    def _bulk_toolbar_set_qty(self) -> None:
+        cat, tbl = self._bulk_current_table()
+        if not tbl or not cat or cat == "Missing":
+            return
+        entries = self._selected_entries_from_table(cat, tbl)
+        self._bulk_set_quantity(entries)
+
+    def _bulk_toolbar_delete(self) -> None:
+        cat, tbl = self._bulk_current_table()
+        if not tbl or not cat or cat == "Missing":
+            return
+        entries = self._selected_entries_from_table(cat, tbl)
+        self._bulk_delete_entries(entries)
+
+    def _bulk_toolbar_export(self) -> None:
+        cat, tbl = self._bulk_current_table()
+        if not tbl or not cat or cat == "Missing":
+            return
+        entries = self._selected_entries_from_table(cat, tbl)
+        self._bulk_export_entries(entries)
+
+    def _bulk_toolbar_import(self) -> None:
+        # Import is not selection-dependent.
+        self._bulk_import_entries()
+    def _show_bulk_menu(self, cat: str, tbl: QTableWidget, pos) -> None:
+        # cat: one of the consolidated categories or "All (raw)"
+        entries = self._selected_entries_from_table(cat, tbl)
+        m = QMenu(tbl)
+        act_set = m.addAction("Set quantity for selected…")
+        act_del = m.addAction("Delete selected…")
+        m.addSeparator()
+        act_exp = m.addAction("Export selected…")
+        act_imp = m.addAction("Import (add) from JSON…")
+        act_set.setEnabled(bool(entries))
+        act_del.setEnabled(bool(entries))
+        act_exp.setEnabled(bool(entries))
+
+        chosen = m.exec(tbl.viewport().mapToGlobal(pos))
+        if chosen is act_set:
+            self._bulk_set_quantity(entries)
+        elif chosen is act_del:
+            self._bulk_delete_entries(entries)
+        elif chosen is act_exp:
+            self._bulk_export_entries(entries)
+        elif chosen is act_imp:
+            self._bulk_import_entries()
+
+    def _bulk_set_quantity(self, entries: List[Dict[str, Any]]) -> None:
+        if not entries:
+            return
+        qty, ok = QInputDialog.getInt(self, "Set Quantity", "Quantity (>= 1):", 1, 1, 999_999_999, 1)
+        if not ok:
+            return
+        for e in entries:
+            st = e.get("Struct", {})
+            _, kind = self._read_count_and_kind(st)
+            self._write_count_with_kind(st, int(qty), kind)
+        self._rebuild_all_views()
+
+    def _bulk_delete_entries(self, entries: List[Dict[str, Any]]) -> None:
+        if not entries:
+            return
+        if QMessageBox.question(self, "Delete", f"Delete {len(entries)} selected entr{'y' if len(entries)==1 else 'ies'}?") != QMessageBox.StandardButton.Yes:
+            return
+        # Remove from the master inv_list by identity
+        kill = {id(e) for e in entries}
+        self.inv_list = [e for e in self.inv_list if id(e) not in kill]
+        # Also remove from underlying save array (same object identity in most cases)
+        try:
+            items = self._ensure_items_array()
+            items[:] = [e for e in items if id(e) not in kill]
+        except Exception:
+            pass
+        self._rebuild_all_views()
+
+    def _bulk_export_entries(self, entries: List[Dict[str, Any]]) -> None:
+        if not entries:
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "Export Selected Items", "", "JSON (*.json)")
+        if not path:
+            return
+        if not path.lower().endswith(".json"):
+            path += ".json"
+
+        out = []
+        for e in entries:
+            st = e.get("Struct", {})
+            item = {
+                "code": (st.get("FirstCodeName_0", {}) or {}).get("Name", ""),
+                "slot": self._slot_enum(st),
+            }
+            cnt, kind = self._read_count_and_kind(st)
+            item["count"] = cnt
+            item["count_type"] = kind
+            out.append(item)
+
+        payload = {"format": "lop-inventory-selection-v1", "items": out}
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+
+    def _bulk_import_entries(self) -> None:
+        if not self.data:
+            QMessageBox.warning(self, "Import", "No save loaded.")
+            return
+        path, _ = QFileDialog.getOpenFileName(self, "Import Items JSON", "", "JSON (*.json)")
+        if not path:
+            return
+        try:
+            payload = json.load(open(path, "r", encoding="utf-8"))
+        except Exception as e:
+            QMessageBox.warning(self, "Import", f"Could not read JSON: {e}")
+            return
+
+        items_in = payload.get("items") if isinstance(payload, dict) else None
+        if not isinstance(items_in, list):
+            QMessageBox.warning(self, "Import", "Unsupported JSON format.")
+            return
+
+        added = 0
+        for it in items_in:
+            if not isinstance(it, dict):
+                continue
+            code = (it.get("code") or "").strip()
+            if not code:
+                continue
+            # Add (or increment if exists)
+            self._add_item(code)
+
+            # Apply count + slot to the (first) matching entry
+            try:
+                items = self._ensure_items_array()
+            except Exception:
+                continue
+
+            norm = _norm_code(code)
+            canon = self._canon_by_norm.get(norm, code)
+            target = None
+            for e in items:
+                st = e.get("Struct", {})
+                if self._is_build_struct(st):
+                    continue
+                c0 = (st.get("FirstCodeName_0") or {}).get("Name", "")
+                if _norm_code(self._canon_by_norm.get(_norm_code(c0), c0)) == _norm_code(canon):
+                    target = e
+                    break
+            if target is None:
+                continue
+
+            st = target.get("Struct", {})
+            # count
+            try:
+                want = int(it.get("count", 1))
+            except Exception:
+                want = 1
+            if want < 1:
+                want = 1
+            _, kind = self._read_count_and_kind(st)
+            self._write_count_with_kind(st, want, kind)
+
+            # slot enum
+            slot = (it.get("slot") or "").strip() or "ELEquipSlotType::E_NONE"
+            self._set_equip_enum(st, slot)
+
+            added += 1
+
+        QMessageBox.information(self, "Import", f"Imported {added} item entr{'y' if added==1 else 'ies'}.")
+        self._rebuild_all_views()
+
+    # ---------- equip manager ----------
+    def _find_equip_enum_node(self, st: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+        for k, v in st.items():
+            if isinstance(v, dict) and isinstance(v.get("Enum"), str) and v["Enum"].startswith("ELEquipSlotType::"):
+                return k, v
+        # create canonical key used elsewhere
+        node = st.setdefault("EquipItemSlotType_0", {})
+        node.clear()
+        node["Enum"] = "ELEquipSlotType::E_NONE"
+        node["tag"] = {"data": {"Enum": ["ELEquipSlotType", None]}}
+        return "EquipItemSlotType_0", node
+
+    def _set_equip_enum(self, st: Dict[str, Any], value: str) -> None:
+        key, node = self._find_equip_enum_node(st)
+        node["Enum"] = str(value)
+        node["tag"] = {"data": {"Enum": ["ELEquipSlotType", None]}}
+
+    def _refresh_equip_slot_choices(self) -> None:
+        if not getattr(self, "cb_equip_slot", None):
+            return
+        slots = {"ELEquipSlotType::E_NONE"}
+        for e in self.inv_list:
+            st = e.get("Struct", {})
+            for v in st.values():
+                if isinstance(v, dict) and isinstance(v.get("Enum"), str) and v["Enum"].startswith("ELEquipSlotType::"):
+                    slots.add(v["Enum"])
+        cur = self.cb_equip_slot.currentText()
+        self.cb_equip_slot.blockSignals(True)
+        self.cb_equip_slot.clear()
+        for s in sorted(slots):
+            self.cb_equip_slot.addItem(s)
+        if cur:
+            self.cb_equip_slot.setCurrentText(cur)
+        self.cb_equip_slot.blockSignals(False)
+
+    def _equipped_set_slot(self, *, value: Optional[str] = None) -> None:
+        rows = self.tbl_equipped.selectionModel().selectedRows()
+        if not rows:
+            return
+        entry = self.row_entry_map_equipped.get(rows[0].row())
+        if not entry:
+            return
+        st = entry.get("Struct", {})
+        slot = value if value is not None else (self.cb_equip_slot.currentText() or "ELEquipSlotType::E_NONE")
+        self._set_equip_enum(st, slot)
+        self._rebuild_equipped()
+        self._refresh_selected_cosmetic_row()
 
     # ---------- details + editing ----------
     def _toggle_details(self, on: bool) -> None:
@@ -1312,7 +1690,7 @@ class InventoryTab(QWidget):
             return
         cat = self._category_for_ingame(code)
         # Only create simple inventory entries here
-        if cat not in ("Consumables", "Materials", "Keys/Lore", "Cosmetics"):
+        if cat not in ("Weapons", "Consumables", "Materials", "Keys/Lore", "Cosmetics"):
             QMessageBox.information(self, "Add Item",
                 "This entry isn’t a normal inventory item and can’t be added here.")
             return
@@ -1351,7 +1729,7 @@ class InventoryTab(QWidget):
         have_norm = {_norm_code(e.get("Struct", {}).get("FirstCodeName_0", {}).get("Name", "")) for e in items if not self._is_build_struct(e.get("Struct", {}))}
         for code in codes:
             cat = self._category_for_ingame(code)
-            if cat not in ("Consumables", "Materials", "Keys/Lore", "Cosmetics"):
+            if cat not in ("Weapons", "Consumables", "Materials", "Keys/Lore", "Cosmetics"):
                 continue  # skip non-inventory tokens in bulk add
             n = _norm_code(code)
             if not n:
@@ -1540,3 +1918,67 @@ class InventoryTab(QWidget):
                 break
         self._restore_tab_title = None
         self._restore_missing_row = None
+
+    # ---------- external navigation helpers ----------
+    def jump_to_code(self, code: str) -> None:
+        """Programmatically jump to an item/build by code and select it."""
+        code = (code or "").strip()
+        if not code:
+            return
+
+        # Accept "A + B" build signatures; prefer first token for filtering.
+        code1, code2 = code, ""
+        if "+" in code:
+            parts = [p.strip() for p in code.split("+") if p.strip()]
+            if len(parts) >= 2:
+                code1, code2 = parts[0], parts[1]
+            elif parts:
+                code1 = parts[0]
+
+        try:
+            self.cb_search_scope.setCurrentText("All Tabs")
+        except Exception:
+            pass
+
+        # Prefer the All (raw) tab since it contains everything.
+        try:
+            for i in range(self.tabs.count()):
+                if self.tabs.tabText(i) == "All (raw)":
+                    self.tabs.setCurrentIndex(i)
+                    break
+        except Exception:
+            pass
+
+        try:
+            self.global_search.setText(code1)
+            # ensure filters are applied
+            self._apply_global_search()
+        except Exception:
+            pass
+
+        tbl = self.tables_by_cat.get("All (raw)")
+        entries = self.entries_by_cat.get("All (raw)", [])
+        if not tbl or not entries:
+            return
+
+        t1 = _norm_code(code1)
+        t2 = _norm_code(code2) if code2 else ""
+
+        for r, e in enumerate(entries):
+            st = (e or {}).get("Struct", {})
+            f = _norm_code(((st.get("FirstCodeName_0") or {}).get("Name", "")))
+            s = _norm_code(((st.get("SecondCodeName_0") or {}).get("Name", "")))
+            if f != t1:
+                continue
+            if t2 and s != t2:
+                continue
+
+            try:
+                tbl.selectRow(r)
+                item0 = tbl.item(r, 0) or tbl.item(r, 1)
+                if item0:
+                    tbl.scrollToItem(item0, QTableWidget.ScrollHint.PositionAtCenter)
+                tbl.setFocus()
+            except Exception:
+                pass
+            break

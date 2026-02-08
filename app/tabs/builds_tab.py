@@ -13,7 +13,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QHeaderView,
-    QGroupBox, QFormLayout, QLineEdit, QComboBox, QPushButton, QCheckBox, QMessageBox, QTabWidget
+    QGroupBox, QFormLayout, QLineEdit, QComboBox, QPushButton, QCheckBox, QMessageBox, QTabWidget, QLabel
 )
 
 JSON = Dict[str, Any]
@@ -85,6 +85,10 @@ def _ensure_int64(st: Dict[str, Any], key: str, value: int) -> None:
     node = st.setdefault(key, {"tag": {"data": {"Other": "Int64Property"}}})
     node["Int64"] = int(value)
 
+def _ensure_bool(st: Dict[str, Any], key: str, value: bool) -> None:
+    node = st.setdefault(key, {"tag": {"data": {"Other": "BoolProperty"}}})
+    node["Bool"] = bool(value)
+
 def _get_int(st: Dict[str, Any], key: str, default: int = 0) -> int:
     node = st.get(key, {})
     if "Int64" in node:
@@ -100,6 +104,37 @@ def _read_name(st: Dict[str, Any], key: str) -> str:
 
 def _read_enum(st: Dict[str, Any], key: str) -> str:
     return (st.get(key, {}) or {}).get("Enum", "") or ""
+def _read_name_any(st: Dict[str, Any], *keys: str) -> str:
+    for k in keys:
+        v = (st.get(k, {}) or {}).get("Name", "")
+        if v:
+            return v
+    return ""
+
+def _read_enum_any(st: Dict[str, Any], *keys: str) -> str:
+    for k in keys:
+        v = (st.get(k, {}) or {}).get("Enum", "")
+        if v:
+            return v
+    return ""
+
+def _classify_weapon_entry(st: Dict[str, Any]) -> str | None:
+    """Classify an entry for the Weapons tab view modes."""
+    h = _read_name_any(st, "FirstCodeName_0", "FirstCodeName")
+    b = _read_name_any(st, "SecondCodeName_0", "SecondCodeName")
+
+    if h and b and h.startswith("WP_") and b.startswith("WP_"):
+        return "build"
+
+    # Single-code weapon-related entries (parts / misc WP_*)
+    if h and h.startswith("WP_") and (_none_like(b) or not b):
+        if h.startswith("WP_PC_HND_"):
+            return "part_handle"
+        if h.startswith("WP_PC_BLD_"):
+            return "part_blade"
+        return "wp"
+
+    return None
 
 def _fmt(code: str) -> str:
     return code.replace("_0", "").replace("_", " ").title()
@@ -190,6 +225,20 @@ class BuildsTab(QWidget):
         in_save = QWidget(self.weapons_tabs)
         in_save_l = QVBoxLayout(in_save)
         in_save_l.setContentsMargins(0, 0, 0, 0)
+        # In Save controls (view mode + filter)
+        in_top = QHBoxLayout()
+        self.cb_view_mode = QComboBox()
+        self.cb_view_mode.addItems(["Builds (Handle+Blade)", "Parts (Handles/Blades)", "All WP_* (weapon-related)"])
+        self.cb_view_mode.setCurrentIndex(0)
+        self.ed_filter = QLineEdit()
+        self.ed_filter.setPlaceholderText("Filter… (matches display / codes / slot)")
+        self.cb_view_mode.currentIndexChanged.connect(lambda _=None: self._apply_in_save_view())
+        self.ed_filter.textChanged.connect(lambda _=None: self._apply_in_save_view())
+        in_top.addWidget(QLabel("View:"), 0)
+        in_top.addWidget(self.cb_view_mode, 0)
+        in_top.addWidget(self.ed_filter, 1)
+        in_save_l.addLayout(in_top)
+
         in_save_l.addWidget(self.tbl)
         self.weapons_tabs.addTab(in_save, "In Save")
 
@@ -211,6 +260,10 @@ class BuildsTab(QWidget):
         self.btn_weapon_db_add = QPushButton("Add Selected → Save")
         self.btn_weapon_db_add.clicked.connect(self._weapon_db_add_selected_to_save)
         db_top.addWidget(self.btn_weapon_db_add, 0)
+
+        self.btn_weapon_db_add_all = QPushButton("Add All Missing → Save")
+        self.btn_weapon_db_add_all.clicked.connect(self._weapon_db_add_all_missing_to_save)
+        db_top.addWidget(self.btn_weapon_db_add_all, 0)
 
         self.btn_weapon_db_remove = QPushButton("Remove From DB")
         self.btn_weapon_db_remove.clicked.connect(self._weapon_db_remove_selected)
@@ -388,24 +441,56 @@ class BuildsTab(QWidget):
         sig = self._weapon_db_selected_sig()
         if not sig or not self.data:
             return
+
         rec = (self._weapon_build_db or {}).get("builds", {}).get(sig, {})
         if not isinstance(rec, dict):
             return
-        h = str(rec.get("handle") or "")
-        b = str(rec.get("blade") or "")
+        h = str(rec.get("handle") or "").strip()
+        b = str(rec.get("blade") or "").strip()
         if not h or not b:
             return
 
+        existing = {
+            self._weapon_sig(_read_name(e.get("Struct", {}), "FirstCodeName_0"),
+                             _read_name(e.get("Struct", {}), "SecondCodeName_0"))
+            for e in self.build_rows
+        }
+        if sig in existing:
+            QMessageBox.information(self, "Already Exists", "That weapon build is already present in this save.")
+            return
+
         arr = _items_array(self.data)
-        e = {"Struct": {}}
-        st = e["Struct"]
+        if not arr:
+            QMessageBox.warning(self, "Weapon DB", "Could not locate the PlayerItems array in this save.")
+            return
+
+        e = copy.deepcopy(self.build_rows[0]) if self.build_rows else {"Struct": {}}
+        if not isinstance(e, dict):
+            e = {"Struct": {}}
+
+        st = e.setdefault("Struct", {})
+        if not isinstance(st, dict):
+            e["Struct"] = {}
+            st = e["Struct"]
+
         _ensure_name(st, "FirstCodeName_0", h)
         _ensure_name(st, "SecondCodeName_0", b)
+        _ensure_bool(st, "bIsWeapon_0", True)
+        _ensure_int(st, "Count_0", 1)
         _ensure_enum(st, "EquipItemSlotType_0", "ELEquipSlotType", "ELEquipSlotType::E_NONE")
         _ensure_int(st, "SharpnessPoint_0", 0)
         if self.cb_autoid.isChecked():
             _ensure_int64(st, "UniqueId_0", self._generate_unique_id())
+
         arr.append(e)
+
+        if sig not in {
+            self._weapon_sig(_read_name(x.get("Struct", {}), "FirstCodeName_0"),
+                             _read_name(x.get("Struct", {}), "SecondCodeName_0"))
+            for x in arr
+        }:
+            QMessageBox.warning(self, "Weapon DB", "Add did not apply: could not confirm the entry in the save data.")
+            return
 
         self._reindex_builds()
         self._collect_lookups()
@@ -417,6 +502,63 @@ class BuildsTab(QWidget):
         r = self.tbl.rowCount() - 1
         if r >= 0:
             self.tbl.selectRow(r)
+
+    def _weapon_db_add_all_missing_to_save(self) -> None:
+        if not self.data:
+            return
+        builds = (self._weapon_build_db or {}).get("builds", {})
+        if not isinstance(builds, dict) or not builds:
+            QMessageBox.information(self, "Weapon DB", "Weapon database is empty.")
+            return
+
+        arr = _items_array(self.data)
+        if not arr:
+            QMessageBox.warning(self, "Weapon DB", "Could not locate the PlayerItems array in this save.")
+            return
+
+        existing = {
+            self._weapon_sig(_read_name(e.get("Struct", {}), "FirstCodeName_0"),
+                             _read_name(e.get("Struct", {}), "SecondCodeName_0"))
+            for e in self.build_rows
+        }
+
+        added = 0
+        for sig, rec in builds.items():
+            if sig in existing or not isinstance(rec, dict):
+                continue
+            h = str(rec.get("handle") or "").strip()
+            b = str(rec.get("blade") or "").strip()
+            if not h or not b:
+                continue
+
+            e = copy.deepcopy(self.build_rows[0]) if self.build_rows else {"Struct": {}}
+            if not isinstance(e, dict):
+                e = {"Struct": {}}
+            st = e.setdefault("Struct", {})
+            if not isinstance(st, dict):
+                e["Struct"] = {}
+                st = e["Struct"]
+
+            _ensure_name(st, "FirstCodeName_0", h)
+            _ensure_name(st, "SecondCodeName_0", b)
+            _ensure_bool(st, "bIsWeapon_0", True)
+            _ensure_int(st, "Count_0", 1)
+            _ensure_enum(st, "EquipItemSlotType_0", "ELEquipSlotType", "ELEquipSlotType::E_NONE")
+            _ensure_int(st, "SharpnessPoint_0", 0)
+            if self.cb_autoid.isChecked():
+                _ensure_int64(st, "UniqueId_0", self._generate_unique_id())
+
+            arr.append(e)
+            existing.add(sig)
+            added += 1
+
+        if added:
+            self._reindex_builds()
+            self._collect_lookups()
+            self._rebuild_table()
+            QMessageBox.information(self, "Weapon DB", f"Added {added} missing weapon builds to this save.")
+        else:
+            QMessageBox.information(self, "Weapon DB", "No missing weapon builds to add (save already has them all).")
 
     def _weapon_db_remove_selected(self) -> None:
         sig = self._weapon_db_selected_sig()
@@ -447,8 +589,12 @@ class BuildsTab(QWidget):
         try:
             self._harvest_weapon_db_from_loaded_save()
             self._rebuild_weapon_db_table()
-        except Exception:
-            pass
+        except Exception as e:
+            # Non-fatal, but don't hide it (it affects the DB view/buttons)
+            try:
+                self._msg(f'[Weapon DB] Harvest failed: {e}')
+            except Exception:
+                pass
 
 
     def _load_parts_db(self) -> None:
@@ -490,12 +636,61 @@ class BuildsTab(QWidget):
                 self._seen_blades.add(code)
                 self._parts_db_dirty = True
 
+    def _apply_in_save_view(self) -> None:
+        """Recompute which rows should be shown in the In Save table."""
+        if not self.data:
+            return
+        self._reindex_builds()
+        self._collect_lookups()
+        self._rebuild_table()
+
+        # Disable the editor when not in Builds mode (table becomes a viewer).
+        try:
+            is_builds_mode = (self.cb_view_mode.currentIndex() == 0)
+        except Exception:
+            is_builds_mode = True
+        try:
+            for w in (self.cb_handle, self.cb_blade, self.cb_slot, self.ed_sharp, self.ed_uid, self.cb_autoid,
+                      self.btn_new, self.btn_clone, self.btn_delete, self.btn_apply):
+                w.setEnabled(is_builds_mode)
+        except Exception:
+            pass
     def _reindex_builds(self) -> None:
+        # Build the list of entries shown in the In Save table based on view mode + filter.
         self.build_rows = []
+
+        try:
+            mode_idx = int(self.cb_view_mode.currentIndex())
+        except Exception:
+            mode_idx = 0
+
+        try:
+            needle = (self.ed_filter.text() or "").strip().lower()
+        except Exception:
+            needle = ""
+
         for e in self.items:
             st = e.get("Struct", {})
-            if _looks_like_weapon_build(st):
-                self.build_rows.append(e)
+            kind = _classify_weapon_entry(st)
+            if not kind:
+                continue
+
+            if mode_idx == 0 and kind != "build":
+                continue
+            if mode_idx == 1 and not kind.startswith("part_"):
+                continue
+            # mode_idx == 2 keeps all weapon-related
+
+            if needle:
+                h = _read_name_any(st, "FirstCodeName_0", "FirstCodeName")
+                b = _read_name_any(st, "SecondCodeName_0", "SecondCodeName")
+                slot = _read_enum_any(st, "EquipItemSlotType_0", "EquipItemSlotType")
+                disp = f"{_fmt(h)} / {_fmt(b)}" if kind == "build" else _fmt(h)
+                hay = " ".join([disp, h or "", b or "", slot or ""]).lower()
+                if needle not in hay:
+                    continue
+
+            self.build_rows.append(e)
 
     def _collect_lookups(self) -> None:
         # Prefer persistent DB (parts ever seen), plus current save's weapon builds.
@@ -530,9 +725,22 @@ class BuildsTab(QWidget):
         try:
             self.tbl.setRowCount(0)
             self.row_to_entry.clear()
+
+            try:
+                mode_idx = int(self.cb_view_mode.currentIndex())
+            except Exception:
+                mode_idx = 0
+
             for r, e in enumerate(self.build_rows):
                 st = e.get("Struct", {})
-                disp = f"{_fmt(_read_name(st,'FirstCodeName_0'))} / {_fmt(_read_name(st,'SecondCodeName_0'))}"
+                kind = _classify_weapon_entry(st) or ""
+
+                h_code = _read_name_any(st, "FirstCodeName_0", "FirstCodeName")
+                b_code = _read_name_any(st, "SecondCodeName_0", "SecondCodeName")
+                slot = _read_enum_any(st, "EquipItemSlotType_0", "EquipItemSlotType") or "ELEquipSlotType::E_NONE"
+
+                disp = f"{_fmt(h_code)} / {_fmt(b_code)}" if kind == "build" else _fmt(h_code)
+
                 self.tbl.insertRow(r)
 
                 # Display (read-only)
@@ -540,36 +748,89 @@ class BuildsTab(QWidget):
                 it.setFlags(it.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 self.tbl.setItem(r, 0, it)
 
-                # Handle combobox (editable)
-                cbh = QComboBox(); cbh.setEditable(True); cbh.addItems(self._all_handles)
-                cur_h = _read_name(st, "FirstCodeName_0")
-                if cur_h and cur_h not in self._all_handles:
-                    cbh.insertItem(0, cur_h)
-                cbh.setCurrentText(cur_h)
-                cbh.currentTextChanged.connect(lambda _, row=r: self._on_row_handle_changed(row))
-                self.tbl.setCellWidget(r, 1, cbh)
+                # In Builds mode, allow inline editing of handle/blade/slot ONLY for real builds.
+                can_edit = (mode_idx == 0 and kind == "build")
 
-                # Blade combobox (editable)
-                cbb = QComboBox(); cbb.setEditable(True); cbb.addItems(self._all_blades)
-                cur_b = _read_name(st, "SecondCodeName_0")
-                if cur_b and cur_b not in self._all_blades:
-                    cbb.insertItem(0, cur_b)
-                cbb.setCurrentText(cur_b)
-                cbb.currentTextChanged.connect(lambda _, row=r: self._on_row_blade_changed(row))
-                self.tbl.setCellWidget(r, 2, cbb)
+                if can_edit:
+                    # Handle combobox (editable)
+                    cbh = QComboBox(); cbh.setEditable(True); cbh.addItems(self._all_handles)
+                    if h_code and h_code not in self._all_handles:
+                        cbh.insertItem(0, h_code)
+                    cbh.setCurrentText(h_code)
+                    cbh.currentTextChanged.connect(lambda _, row=r: self._on_row_handle_changed(row))
+                    self.tbl.setCellWidget(r, 1, cbh)
 
-                # Slot combobox
-                cbs = QComboBox(); cbs.setEditable(False); cbs.addItems(self._all_slots)
-                cur_s = _read_enum(st, "EquipItemSlotType_0") or "ELEquipSlotType::E_NONE"
-                if cur_s not in self._all_slots:
-                    cbs.insertItem(0, cur_s)
-                cbs.setCurrentText(cur_s)
-                cbs.currentTextChanged.connect(lambda _, row=r: self._on_row_slot_changed(row))
-                self.tbl.setCellWidget(r, 3, cbs)
+                    # Blade combobox (editable)
+                    cbb = QComboBox(); cbb.setEditable(True); cbb.addItems(self._all_blades)
+                    if b_code and b_code not in self._all_blades:
+                        cbb.insertItem(0, b_code)
+                    cbb.setCurrentText(b_code)
+                    cbb.currentTextChanged.connect(lambda _, row=r: self._on_row_blade_changed(row))
+                    self.tbl.setCellWidget(r, 2, cbb)
+
+                    # Slot combobox
+                    cbs = QComboBox(); cbs.setEditable(False); cbs.addItems(self._all_slots)
+                    if slot not in self._all_slots:
+                        cbs.insertItem(0, slot)
+                    cbs.setCurrentText(slot)
+                    cbs.currentTextChanged.connect(lambda _, row=r: self._on_row_slot_changed(row))
+                    self.tbl.setCellWidget(r, 3, cbs)
+                else:
+                    # Viewer rows: show codes as plain text
+                    it_h = QTableWidgetItem(h_code)
+                    it_b = QTableWidgetItem(b_code if kind == "build" else "")
+                    it_s = QTableWidgetItem(slot)
+                    for itx in (it_h, it_b, it_s):
+                        itx.setFlags(itx.flags() & ~Qt.ItemFlag.ItemIsEditable)
+                    self.tbl.setItem(r, 1, it_h)
+                    self.tbl.setItem(r, 2, it_b)
+                    self.tbl.setItem(r, 3, it_s)
 
                 self.row_to_entry[r] = e
         finally:
             self._populating = False
+
+    # ---------- external navigation helpers ----------
+    def jump_to_build(self, handle: str, blade: str) -> None:
+        """Select a weapon build row in the In Save table."""
+        h = (handle or "").strip()
+        b = (blade or "").strip()
+        if not h or not b:
+            return
+
+        # Ensure we're on the In Save sub-tab.
+        try:
+            for i in range(self.weapons_tabs.count()):
+                if self.weapons_tabs.tabText(i) == "In Save":
+                    self.weapons_tabs.setCurrentIndex(i)
+                    break
+        except Exception:
+            pass
+
+        # Rebuild if needed.
+        try:
+            if self.tbl.rowCount() != len(self.build_rows):
+                self._rebuild_table()
+        except Exception:
+            pass
+
+        hn = h.strip().casefold()
+        bn = b.strip().casefold()
+
+        for r, e in enumerate(self.build_rows or []):
+            st = (e or {}).get("Struct", {})
+            cur_h = (_read_name(st, "FirstCodeName_0") or "").strip().casefold()
+            cur_b = (_read_name(st, "SecondCodeName_0") or "").strip().casefold()
+            if cur_h == hn and cur_b == bn:
+                try:
+                    self.tbl.selectRow(r)
+                    it = self.tbl.item(r, 0)
+                    if it:
+                        self.tbl.scrollToItem(it, QTableWidget.ScrollHint.PositionAtCenter)
+                    self.tbl.setFocus()
+                except Exception:
+                    pass
+                break
 
     # inline row change handlers
     def _on_row_handle_changed(self, row: int) -> None:
@@ -724,6 +985,9 @@ class BuildsTab(QWidget):
         if not self.data:
             return
         arr = _items_array(self.data)
+        if not arr:
+            QMessageBox.warning(self, 'Build', 'Could not locate the PlayerItems array in this save.')
+            return
         e = {"Struct": {}}
         st = e["Struct"]
         # start with current editor values (must look like a weapon)
@@ -760,6 +1024,9 @@ class BuildsTab(QWidget):
         if not src:
             return
         arr = _items_array(self.data)
+        if not arr:
+            QMessageBox.warning(self, 'Clone', 'Could not locate the PlayerItems array in this save.')
+            return
         new_e = copy.deepcopy(src)
         st = new_e.setdefault("Struct", {})
         self._note_part_seen(_read_name(st, "FirstCodeName_0"), kind="handle")

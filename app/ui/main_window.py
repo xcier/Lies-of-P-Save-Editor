@@ -24,6 +24,7 @@ from app.core.cheats import (
 from app.core.file_manager import ensure_uesave_ok
 from app.utils.resources import find_app_icon
 from app.ui.sidenav import SideNav  # public API
+from app.ui.theme_qss import qss_dark, qss_light
 
 from app.tabs.character_tab import CharacterTab
 from app.tabs.stats_tab import StatsTab
@@ -529,10 +530,12 @@ class MainWindow(QMainWindow):
 
     def _on_loaded_ok(self, data: dict, path: str):
         self.data = data; self.current_file = path; self._mark_dirty(False)
+        # Any UI tab that reads/writes from the loaded save JSON must be refreshed here.
+        # If a tab is omitted from this list, it will stay blank even when the save contains data.
         for tab in (
             self.character_tab, self.stats_tab, self.inventory_tab,
             self.mission_tab, self.currency_tab, self.fast_travel_tab,
-            self.json_tab, self.slots_tab, self.build_tab
+            self.json_tab, self.slots_tab, self.build_tab,
         ):
             try: tab.load_data(data)
             except Exception: pass
@@ -820,9 +823,17 @@ class MainWindow(QMainWindow):
             pal.setColor(QPalette.ColorRole.HighlightedText, QColor(255, 255, 255))
             pal.setColor(QPalette.ColorRole.BrightText, QColor(255, 64, 64))
             app.setPalette(pal)
+            try:
+                app.setStyleSheet(qss_dark())
+            except Exception:
+                pass
         else:
             app.setStyle("Fusion")
             app.setPalette(QPalette())
+            try:
+                app.setStyleSheet(qss_light())
+            except Exception:
+                pass
 
     def _toggle_dark_mode(self, checked: bool) -> None:
         # True = dark, False = light

@@ -1,0 +1,146 @@
+{
+  "QuartzPocket_1": {
+    "0": "CL1_RED_3",
+    "1": "CL1_BLUE_2"
+  },
+  "QuartzPocket_10": {
+    "0": "CL2_RED_5",
+    "1": "CL3_BLUE_12",
+    "2": "CL2_YELLOW_6"
+  },
+  "QuartzPocket_11": {
+    "0": "CL2_RED_6",
+    "1": "CL2_BLUE_5",
+    "2": "CL2_YELLOW_8"
+  },
+  "QuartzPocket_12": {
+    "0": "CL3_RED_12",
+    "1": "CL3_BLUE_11",
+    "2": "CL1_GREEN_4"
+  },
+  "QuartzPocket_13": {
+    "0": "CL4_RED_15",
+    "1": "CL4_BLUE_14",
+    "2": "CL3_GREEN_10"
+  },
+  "QuartzPocket_14": {
+    "0": "CL3_RED_9",
+    "1": "CL4_BLUE_16",
+    "2": "CL3_GREEN_12"
+  },
+  "QuartzPocket_15": {
+    "0": "CL3_RED_10",
+    "1": "CL3_BLUE_9",
+    "2": "CL1_GREEN_1"
+  },
+  "QuartzPocket_16": {
+    "0": "CL4_RED_16",
+    "1": "CL4_BLUE_15",
+    "2": "CL3_GREEN_11"
+  },
+  "QuartzPocket_17": {
+    "0": "CL5_RED_18",
+    "1": "CL5_BLUE_18",
+    "2": "CL5_GREEN_20",
+    "3": "CL4_YELLOW_15"
+  },
+  "QuartzPocket_18": {
+    "0": "CL5_RED_20",
+    "1": "CL5_BLUE_20",
+    "2": "CL4_GREEN_14",
+    "3": "CL3_YELLOW_10"
+  },
+  "QuartzPocket_19": {
+    "0": "CL4_RED_13",
+    "1": "CL4_BLUE_13",
+    "2": "CL4_GREEN_16",
+    "3": "CL2_YELLOW_5"
+  },
+  "QuartzPocket_2": {
+    "0": "CL1_BLUE_3",
+    "1": "CL1_YELLOW_3"
+  },
+  "QuartzPocket_20": {
+    "0": "CL5_RED_19",
+    "1": "CL5_BLUE_19",
+    "2": "CL4_GREEN_13",
+    "3": "CL4_YELLOW_16"
+  },
+  "QuartzPocket_21": {
+    "0": "CL6_RED_22",
+    "1": "CL6_BLUE_22",
+    "2": "CL6_GREEN_23",
+    "3": "CL6_YELLOW_23"
+  },
+  "QuartzPocket_22": {
+    "0": "CL6_RED_24",
+    "1": "CL6_BLUE_24",
+    "2": "CL5_GREEN_17",
+    "3": "CL5_YELLOW_20"
+  },
+  "QuartzPocket_23": {
+    "0": "CL5_RED_17",
+    "1": "CL5_BLUE_17",
+    "2": "CL5_GREEN_19",
+    "3": "CL4_YELLOW_14"
+  },
+  "QuartzPocket_24": {
+    "0": "CL6_RED_23",
+    "1": "CL6_BLUE_23",
+    "2": "CL6_GREEN_24",
+    "3": "CL5_YELLOW_18"
+  },
+  "QuartzPocket_25": {
+    "0": "CL7_RED_25",
+    "1": "CL7_BLUE_26",
+    "2": "CL7_GREEN_25",
+    "3": "CL7_YELLOW_26"
+  },
+  "QuartzPocket_26": {
+    "0": "CL7_RED_28",
+    "1": "CL7_BLUE_28",
+    "2": "CL7_GREEN_27",
+    "3": "CL6_YELLOW_21"
+  },
+  "QuartzPocket_27": {
+    "0": "CL6_RED_21",
+    "1": "CL6_BLUE_21",
+    "2": "CL7_GREEN_28",
+    "3": "CL6_YELLOW_22"
+  },
+  "QuartzPocket_28": {
+    "0": "CL7_RED_26",
+    "1": "CL7_BLUE_27",
+    "2": "CL7_GREEN_26",
+    "3": "CL7_YELLOW_27"
+  },
+  "QuartzPocket_3": {
+    "0": "CL1_BLUE_4",
+    "1": "CL1_YELLOW_4"
+  },
+  "QuartzPocket_4": {
+    "0": "CL1_RED_4",
+    "1": "CL1_YELLOW_1"
+  },
+  "QuartzPocket_5": {
+    "0": "CL2_RED_7",
+    "1": "CL2_BLUE_6"
+  },
+  "QuartzPocket_6": {
+    "0": "CL1_RED_1",
+    "1": "CL2_BLUE_8"
+  },
+  "QuartzPocket_7": {
+    "0": "CL1_RED_2",
+    "1": "CL1_BLUE_1"
+  },
+  "QuartzPocket_8": {
+    "0": "CL2_RED_8",
+    "1": "CL2_BLUE_7"
+  },
+  "QuartzPocket_9": {
+    "0": "CL3_RED_11",
+    "1": "CL3_BLUE_10",
+    "2": "CL1_GREEN_3"
+  }
+}

@@ -1,0 +1,177 @@
+{
+  "tag": {
+    "data": {
+      "Struct": {
+        "struct_type": {
+          "Struct": "LQuartzSaveData"
+        },
+        "id": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  },
+  "Struct": {
+    "Struct": {
+      "ActivateQuartzSystem_0": {
+        "tag": {
+          "data": {
+            "Other": "BoolProperty"
+          }
+        },
+        "Bool": true
+      },
+      "CoreLevel_0": {
+        "tag": {
+          "data": {
+            "Other": "IntProperty"
+          }
+        },
+        "Int": 1
+      },
+      "EffectSaveDataList_0": {
+        "tag": {
+          "data": {
+            "Array": {
+              "Struct": {
+                "struct_type": {
+                  "Struct": null
+                },
+                "id": "00000000-0000-0000-0000-000000000000"
+              }
+            }
+          }
+        },
+        "Array": {
+          "Struct": {
+            "type_": "StructProperty",
+            "struct_type": {
+              "Struct": "LQuartzEffectSaveData"
+            },
+            "id": "00000000-0000-0000-0000-000000000000",
+            "value": [
+              {
+                "Struct": {
+                  "QuartzPocketCodeName_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "NameProperty"
+                      }
+                    },
+                    "Name": "QuartzPocket_1"
+                  },
+                  "QuartzEffectCodename_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "NameProperty"
+                      }
+                    },
+                    "Name": "CL1_RED_1"
+                  },
+                  "SlotIndex_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "IntProperty"
+                      }
+                    },
+                    "Int": 0
+                  }
+                }
+              },
+              {
+                "Struct": {
+                  "QuartzPocketCodeName_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "NameProperty"
+                      }
+                    },
+                    "Name": "QuartzPocket_2"
+                  },
+                  "QuartzEffectCodename_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "NameProperty"
+                      }
+                    },
+                    "Name": "CL1_RED_4"
+                  },
+                  "SlotIndex_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "IntProperty"
+                      }
+                    },
+                    "Int": 0
+                  }
+                }
+              },
+              {
+                "Struct": {
+                  "QuartzPocketCodeName_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "NameProperty"
+                      }
+                    },
+                    "Name": "QuartzPocket_3"
+                  },
+                  "QuartzEffectCodename_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "NameProperty"
+                      }
+                    },
+                    "Name": "CL1_RED_3"
+                  },
+                  "SlotIndex_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "IntProperty"
+                      }
+                    },
+                    "Int": 0
+                  }
+                }
+              },
+              {
+                "Struct": {
+                  "QuartzPocketCodeName_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "NameProperty"
+                      }
+                    },
+                    "Name": "QuartzPocket_4"
+                  },
+                  "QuartzEffectCodename_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "NameProperty"
+                      }
+                    },
+                    "Name": "CL1_RED_2"
+                  },
+                  "SlotIndex_0": {
+                    "tag": {
+                      "data": {
+                        "Other": "IntProperty"
+                      }
+                    },
+                    "Int": 0
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "CoreLevelupType_0": {
+        "tag": {
+          "data": {
+            "Other": "IntProperty"
+          }
+        },
+        "Int": 2
+      }
+    }
+  }
+}

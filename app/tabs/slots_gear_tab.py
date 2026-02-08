@@ -13,6 +13,9 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QCheckBox,
     QMessageBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QHeaderView,
 )
 
 JSON = Dict[str, Any]
@@ -175,6 +178,11 @@ class SlotsGearTab(QWidget):
         self.slot_lock_checks: Dict[str, QCheckBox] = {}
         self._locks_layout: Optional[QGridLayout] = None
 
+        # Equipped Overview UI
+        self.tbl_equipped: Optional[QTableWidget] = None
+        # row -> list of wrapped equipped refs: {"entry": <dict>, "source": "Inventory"|"Weapons"}
+        self._equipped_row_ref: Dict[int, List[Dict[str, Any]]] = {}
+
         # ---------- layout skeleton ----------
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 12, 12, 12)
@@ -184,6 +192,35 @@ class SlotsGearTab(QWidget):
         hdr.setObjectName("SlotsHeaderLabel")
         hdr.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         root.addWidget(hdr)
+
+        # --- Equipped Overview ----------------------------------------------
+        gb_eq = QGroupBox("Equipped Overview")
+        gb_eq.setObjectName("CardEquippedOverview")
+        gb_eq.setFlat(True)
+        ev = QVBoxLayout(gb_eq)
+        ev.setContentsMargins(10, 8, 10, 8)
+        ev.setSpacing(6)
+
+        self.tbl_equipped = QTableWidget(0, 5, self)
+        self.tbl_equipped.setObjectName("EquippedOverviewTable")
+        self.tbl_equipped.setAlternatingRowColors(True)
+        self.tbl_equipped.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.tbl_equipped.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
+        # Actions column intentionally kept minimal (Unequip only).
+        self.tbl_equipped.setHorizontalHeaderLabels(["Slot", "Equipped", "Code", "Source", "Actions"])
+        eh = self.tbl_equipped.horizontalHeader()
+        eh.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        eh.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        eh.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        eh.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        eh.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        try:
+            self.tbl_equipped.verticalHeader().setVisible(False)
+        except Exception:
+            pass
+        self.tbl_equipped.setMinimumHeight(160)
+        ev.addWidget(self.tbl_equipped)
+        root.addWidget(gb_eq)
 
         # --- Quick-use --------------------------------------------------------
         gb_quick = QGroupBox("Quick Slots")
@@ -335,9 +372,161 @@ class SlotsGearTab(QWidget):
         self.owned_consumables = ["None"] + sorted(set(owned_consume), key=str.casefold)
 
         # populate UI
+        self._populate_equipped_overview()
         self._populate_quick_use()
         self._populate_assist_radial()
         self._populate_slot_locks()
+
+    # ---------- Equipped Overview ----------
+
+    @staticmethod
+    def _slot_value_from_struct(st: Dict[str, Any]) -> str:
+        """Find the first ELEquipSlotType enum in a struct."""
+        for v in (st or {}).values():
+            if isinstance(v, dict) and isinstance(v.get("Enum"), str) and v["Enum"].startswith("ELEquipSlotType::"):
+                return v["Enum"]
+        return "ELEquipSlotType::E_NONE"
+
+    @staticmethod
+    def _set_slot_enum(st: Dict[str, Any], new_enum: str) -> None:
+        if not isinstance(new_enum, str) or not new_enum.startswith("ELEquipSlotType::"):
+            return
+        key = None
+        for k, v in (st or {}).items():
+            if isinstance(v, dict) and isinstance(v.get("Enum"), str) and v["Enum"].startswith("ELEquipSlotType::"):
+                key = k
+                break
+        if key is None:
+            key = "EquipItemSlotType_0"
+            st[key] = {"tag": {"data": {"Enum": ["ELEquipSlotType", None]}}, "Enum": "ELEquipSlotType::E_NONE"}
+        st[key]["Enum"] = new_enum
+        st[key]["tag"] = {"data": {"Enum": ["ELEquipSlotType", None]}}
+
+    def _label_for_item_code(self, code: str) -> str:
+        code = (code or "").strip()
+        if not code or code.lower() == "none":
+            return "None"
+        try:
+            name = (getattr(self.main_window, "inventory_tab", None) and self.main_window.inventory_tab.names.get(code))
+        except Exception:
+            name = None
+        if name:
+            return str(name).strip().rstrip(",")
+        return code
+
+    def _gather_equipped(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Return slot_enum -> list of wrapped refs: {entry, source}."""
+        out: Dict[str, List[Dict[str, Any]]] = {}
+
+        def add(entry: Dict[str, Any], source: str) -> None:
+            st = entry.get("Struct", {}) if isinstance(entry, dict) else {}
+            slot = self._slot_value_from_struct(st)
+            if not isinstance(slot, str) or slot.endswith("E_NONE"):
+                return
+            out.setdefault(slot, []).append({"entry": entry, "source": source})
+
+        for e in (self.inv_list or []):
+            add(e, "Inventory")
+
+        # weapon builds (if present)
+        try:
+            build_rows = getattr(getattr(self.main_window, "build_tab", None), "build_rows", [])
+            for e in (build_rows or []):
+                add(e, "Weapons")
+        except Exception:
+            pass
+
+        return out
+
+    def _populate_equipped_overview(self) -> None:
+        if not self.tbl_equipped:
+            return
+
+        eq = self._gather_equipped()
+
+        # show canonical slots first, then any extras discovered
+        ordered = list(CANON_EQUIP_SLOTS)
+        for k in sorted(eq.keys(), key=str.casefold):
+            if k not in ordered:
+                ordered.append(k)
+
+        self.tbl_equipped.setRowCount(0)
+        self._equipped_row_ref.clear()
+
+        def _desc_for_entry(w: Dict[str, Any]) -> tuple[str, str]:
+            e = w.get("entry") or {}
+            st = e.get("Struct", {})
+            h = (st.get("FirstCodeName_0") or {}).get("Name", "")
+            b = (st.get("SecondCodeName_0") or {}).get("Name", "")
+            if h and b and h.startswith("WP_") and b.startswith("WP_"):
+                return f"{h} / {b}", f"{h} + {b}"
+            code = (st.get("FirstCodeName_0") or {}).get("Name", "")
+            return self._label_for_item_code(code), code or ""
+
+        row = 0
+        for slot in ordered:
+            entries = eq.get(slot, [])
+            if not entries:
+                self.tbl_equipped.insertRow(row)
+                self.tbl_equipped.setItem(row, 0, QTableWidgetItem(slot))
+                self.tbl_equipped.setItem(row, 1, QTableWidgetItem("Empty"))
+                self.tbl_equipped.setItem(row, 2, QTableWidgetItem(""))
+                self.tbl_equipped.setItem(row, 3, QTableWidgetItem(""))
+                self.tbl_equipped.setItem(row, 4, QTableWidgetItem(""))
+                row += 1
+                continue
+
+            primary = entries[0]
+            label, code = _desc_for_entry(primary)
+            src = str(primary.get("source", ""))
+            if len(entries) > 1:
+                label = f"{label}  (⚠ {len(entries)} items)"
+
+            self.tbl_equipped.insertRow(row)
+            self.tbl_equipped.setItem(row, 0, QTableWidgetItem(slot))
+            self.tbl_equipped.setItem(row, 1, QTableWidgetItem(label))
+            self.tbl_equipped.setItem(row, 2, QTableWidgetItem(code))
+            self.tbl_equipped.setItem(row, 3, QTableWidgetItem(src))
+
+            actions = QWidget(self.tbl_equipped)
+            ah = QHBoxLayout(actions)
+            ah.setContentsMargins(0, 0, 0, 0)
+            ah.setSpacing(6)
+            btn_unequip = QPushButton("Unequip")
+            btn_unequip.setObjectName("MiniButton")
+
+            def _do(_checked: bool = False, _slot=slot):
+                self._unequip_slot(_slot)
+
+            btn_unequip.clicked.connect(_do)
+            ah.addWidget(btn_unequip)
+            ah.addStretch(1)
+            self.tbl_equipped.setCellWidget(row, 4, actions)
+
+            self._equipped_row_ref[row] = entries
+            row += 1
+
+        try:
+            self.tbl_equipped.resizeRowsToContents()
+        except Exception:
+            pass
+
+    def _unequip_slot(self, slot_enum: str) -> None:
+        slot_enum = (slot_enum or "").strip()
+        if not slot_enum.startswith("ELEquipSlotType::"):
+            return
+        eq = self._gather_equipped().get(slot_enum, [])
+        if not eq:
+            return
+        for w in eq:
+            e = w.get("entry") or {}
+            st = e.get("Struct", {})
+            self._set_slot_enum(st, "ELEquipSlotType::E_NONE")
+        self._populate_equipped_overview()
+        try:
+            self.main_window.inventory_tab._build_equipped_table()
+        except Exception:
+            pass
 
     # ---------- create-missing initializers ----------
 

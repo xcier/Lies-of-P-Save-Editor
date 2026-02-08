@@ -5,5 +5,5 @@ Keep UI titles, About page, and any packaging metadata consistent.
 """
 
 APP_NAME = "Lies of P Save Editor"
-VERSION = "1.03"
+VERSION = "1.04"
 AUTHOR_LINE = "Created by ProtoBuffers"

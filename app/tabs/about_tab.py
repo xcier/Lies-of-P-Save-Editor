@@ -178,6 +178,17 @@ class AboutTab(QWidget):
                 <li>Cash App: <span class="mono">$xcier</span></li>
                 <li>YouTube / Instagram / TikTok: <b>protobuffers</b></li>
             </ul>
+            <h2>Changelog (1.04)</h2>
+            <ul>
+                <li>Updated Inventory to support <b>Bulk Actions</b> for adding item counts (right-click after selecting the items you want to change).</li>
+                <li>Added slots to show what is currently equipped.</li>
+                <li>Weapons menu database now works as intended.</li>
+                <li>Attempted to play around with P-Organs and the Quartz table, but did not have success editing those values yet.</li>
+                <li>Load time improvements.</li>
+                <li>Cleaned the UI a little more.</li>
+                <li><b>Still more to come!</b></li>
+            </ul>
+
             <h2>Changelog (1.03)</h2>
             <ul>
                 <li>Created weapon/part database (50+ weapons and 150+ buildable parts) accessible from the Inventory → Weapons tooling.</li>
